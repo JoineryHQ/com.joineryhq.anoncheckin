@@ -20,4 +20,11 @@
     <title>Reset</title>
     <access_arguments>access CiviCRM</access_arguments>
   </item>
+  <item>
+    <path>civicrm/anoncheckin/go</path>
+    <page_callback>CRM_Anoncheckin_Form_Go</page_callback>
+    <title>Session Attendance</title>
+    <access_callback>1</access_callback>
+    <is_public>true</is_public>
+  </item>
 </menu>
