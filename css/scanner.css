@@ -1,0 +1,8 @@
+video#anoncheckin-video {
+  display: block;
+  margin-top: 1em;
+}
+
+p#anoncheckin-scan-success {
+  display: none;
+}

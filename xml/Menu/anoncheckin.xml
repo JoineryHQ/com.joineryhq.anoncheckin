@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<menu>
+  <item>
+    <path>civicrm/anoncheckin/status</path>
+    <page_callback>CRM_Anoncheckin_Page_Status</page_callback>
+    <title>Status</title>
+    <access_callback>1</access_callback>
+    <is_public>true</is_public>
+  </item>
+  <item>
+    <path>civicrm/anoncheckin/checkin</path>
+    <page_callback>CRM_Anoncheckin_Form_Checkin</page_callback>
+    <title>Checkin</title>
+    <access_callback>1</access_callback>
+    <is_public>true</is_public>
+  </item>
+  <item>
+    <path>civicrm/anoncheckin/reset</path>
+    <page_callback>CRM_Anoncheckin_Page_Reset</page_callback>
+    <title>Reset</title>
+    <access_arguments>access CiviCRM</access_arguments>
+  </item>
+</menu>
