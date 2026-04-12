@@ -16,6 +16,9 @@ class CRM_Anoncheckin_Form_Go extends CRM_Core_Form {
   public function buildQuickForm(): void {
     CRM_Core_Resources::singleton()->addScriptUrl('https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js');
 
+    
+    $this->add('hidden', 'sid', $this->sid);
+
     $this->addButtons([
       [
         'type' => 'submit',
@@ -29,27 +32,12 @@ class CRM_Anoncheckin_Form_Go extends CRM_Core_Form {
     parent::buildQuickForm();
   }
 
+  public function preProcess(): void {
+    $a = 1;
+  }
   public function postProcess(): void {
     $values = $this->exportValues();
-    $options = $this->getColorOptions();
-    CRM_Core_Session::setStatus(E::ts('You picked color "%1"', [
-      1 => $options[$values['favorite_color']],
-    ]));
     parent::postProcess();
-  }
-
-  public function getColorOptions(): array {
-    $options = [
-      '' => E::ts('- select -'),
-      '#f00' => E::ts('Red'),
-      '#0f0' => E::ts('Green'),
-      '#00f' => E::ts('Blue'),
-      '#f0f' => E::ts('Purple'),
-    ];
-    foreach (['1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e'] as $f) {
-      $options["#{$f}{$f}{$f}"] = E::ts('Grey (%1)', [1 => $f]);
-    }
-    return $options;
   }
 
   /**

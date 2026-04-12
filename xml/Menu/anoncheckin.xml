@@ -27,4 +27,11 @@
     <access_callback>1</access_callback>
     <is_public>true</is_public>
   </item>
+  <item>
+    <path>civicrm/anoncheckin/loadtest</path>
+    <page_callback>CRM_Anoncheckin_Form_Loadtest</page_callback>
+    <title>Loadtest</title>
+    <access_callback>1</access_callback>
+    <is_public>true</is_public>
+  </item>
 </menu>
