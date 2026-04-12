@@ -5,6 +5,8 @@ use CRM_Anoncheckin_ExtensionUtil as E;
 
 class CRM_Anoncheckin_Form_Loadtest extends CRM_Core_Form {
 
+  var $cid = 7037;
+
   public function buildQuickForm() {
     // Simple submit button
     $this->addButtons([
@@ -33,7 +35,7 @@ class CRM_Anoncheckin_Form_Loadtest extends CRM_Core_Form {
     // --- Simulate DB reads (2–3 queries) ---
 
     // 1. Fetch a contact (arbitrary)
-    $sql1 = "SELECT id, display_name FROM civicrm_contact ORDER BY id DESC LIMIT 1";
+    $sql1 = "SELECT id, display_name FROM civicrm_contact where id={$this->cid} ORDER BY id DESC LIMIT 1";
     $dao1 = CRM_Core_DAO::executeQuery($sql1);
     if ($dao1->fetch()) {
       $this->assign('contact_name', $dao1->display_name);
@@ -62,7 +64,7 @@ class CRM_Anoncheckin_Form_Loadtest extends CRM_Core_Form {
 
     $sql = "
       INSERT INTO civicrm_log (entity_table, entity_id, data, modified_id, modified_date)
-      VALUES ('civicrm_contact', 1, 'anoncheckin loadtest', 1, NOW())
+      VALUES ('civicrm_contact', '{$this->cid}', 'anoncheckin loadtest', '{$this->cid}', NOW())
     ";
 
     try {
