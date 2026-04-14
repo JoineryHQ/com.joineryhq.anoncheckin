@@ -13,6 +13,7 @@ class CRM_Anoncheckin_Utils_Session {
 
   private function __construct() {
     $this->_session = CRM_Core_Session::singleton();
+    $this->_session->createScope(self::PREFIX);
   }
 
   /**
@@ -58,7 +59,22 @@ class CRM_Anoncheckin_Utils_Session {
   public function getAll() {
     return $this->_session->get(self::PREFIX);
   }
+  
+  public function setMessage($message, $type = 'info') {
+    $messages = $this->get('messages') ?? [];
+    $messages[] = [
+      'type' => $type,
+      'message' => $message,
+    ];
+    $this->set('messages', $messages);
+  }
 
+  public function consumeMessages() {
+    $messages = $this->get('messages');
+    $this->set('messages', []);
+    return $messages;
+  }
+  
   private function set_sid($value) {
     $this->_session->set('sid', $value, self::PREFIX);
     if ($value) {
@@ -71,8 +87,8 @@ class CRM_Anoncheckin_Utils_Session {
   
   private function get_sid() {
     $timestamp = $this->_session->get('sid_timestamp', self::PREFIX);
-    // Pad expiry by 30 seconds (we've probably told users the time in minutes; this gives them some grace).
-    $expirySeconds = ($this->getExpiryMinutes('sid') * 60 + 30);
+    // Pad expiry by 10 seconds (we've probably told users the time in minutes; this gives them some grace).
+    $expirySeconds = ($this->getExpiryMinutes('sid') * 60 + 10);
     if ($timestamp) {
       $age = (time() - $timestamp);
       if ($age < $expirySeconds) {
@@ -82,4 +98,5 @@ class CRM_Anoncheckin_Utils_Session {
     return NULL;
   }
 
+  
 }
