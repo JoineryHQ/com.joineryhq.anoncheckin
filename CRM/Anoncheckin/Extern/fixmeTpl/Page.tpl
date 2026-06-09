@@ -4,6 +4,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+    <link rel="stylesheet" id="ls-global-css" href="/wp-content/plugins/civicrm/civicrm/css/crm-i.css" media="all">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css"/>    
+    
     <style>
       body {
         font-family: sans-serif;
@@ -179,6 +182,9 @@
       #anoncheckin-scan-status-container a {
         color: white;
       }
+      #anoncheckin-participantNameLock {
+        color: green;
+      }
     </style>
     <script>
       {literal}
@@ -341,15 +347,15 @@
     <!-- User -->
     <div class="card center">
       {if $participantName}
-        <h2>{$participantName}</h2>
+        <h2>{$participantName} <i id="anoncheckin-participantNameLock" class="fa fa-lock"></i></h2>
         {assign var="buttonClass" value="secondary"}
-        {assign var="buttonLabel" value="Re-scan my badge"}
+        <button id="anoncheckin-not-me" class="button secondary">This is not me!</button>
       {else}
         <p></p>
         {assign var="buttonClass" value="success"}
         {assign var="buttonLabel" value="Scan my badge"}
+        <button id="anoncheckin-scan-badge" data-scan-type="p" class="button {$buttonClass}">{$buttonLabel}</button>
       {/if}
-      <button id="anoncheckin-scan-badge" data-scan-type="p" class="button {$buttonClass}">{$buttonLabel}</button>
 
       <!-- Session selection -->
       {if $sessionTitle}

@@ -14,6 +14,8 @@ class CRM_Anoncheckin_Extern_Page {
   public function print() {
     $tpl = CRM_Core_Smarty::singleton();
     $messages = CRM_Anoncheckin_Utils_Session::singleton()->consumeMessages();
+    $config = CRM_Core_Config::singleton();
+    $tpl->assign('userFrameworkResourceURL', $config->userFrameworkResourceURL);
     $tpl->assign('messages', $messages);
     $tpl->display($this->getTemplate());
     exit();
