@@ -1,8 +1,9 @@
 <?php
+// Wrap this in an Immediately Invoked Function Expression, just to avoid
+// potentially polluting the global namespace.
 (function() {
 
-  // get cached vars.
-  require_once(__DIR__ . '/cache/vars.php');
+  // get cached config so we can bootstrap civicrm.
   $anoncheckinConfig = json_decode(
     file_get_contents(__DIR__ . '/cache/config.json'),
     TRUE
@@ -47,7 +48,7 @@
   $sid = $session->get('sid');
 
   $sessionTitle = CRM_Anoncheckin_Utils_Data::getSessionTitle($sid);
-  $participantName = CRM_Anoncheckin_Utils_Data::getParticipantName($pid);
+  $participantName = CRM_Anoncheckin_Utils_ExternData::getParticipantName($pid);
   
   // if POST: process input.
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -96,76 +97,6 @@
   }
   $page->assign('attendedSessionNames', $attendedSessionTitles);
   
-  
-
   $page->print();
 
-
-  // --- INPUT ---
-  $p = $_REQUEST['p'] ?? null;
-  $ph = $_REQUEST['ph'] ?? null;
-  $s = $_REQUEST['s'] ?? null;
-  $sh = $_REQUEST['sh'] ?? null;
-
-  // --- HELPERS ---
-  function fail($msg) {
-    http_response_code(400);
-    echo json_encode(['error' => $msg]);
-    exit;
-  }
-
-  function valid_hmac($value, $hmac, $secret) {
-    return true;
-    $calc = hash_hmac('sha256', $value, $secret, true);
-    $calc = rtrim(strtr(base64_encode(substr($calc, 0, 12)), '+/', '-_'), '=');
-    return hash_equals($calc, $hmac);
-  }
-
-  // --- VALIDATE ---
-  if (!$p || !$ph || !valid_hmac($p, $ph, $secret)) {
-    fail('invalid participant');
-  }
-  if (!$s || !$sh || !valid_hmac($s, $sh, $secret)) {
-    fail('invalid session');
-  }
-
-  // --- LOAD PARTICIPANT ---
-  $participant = \Civi\Api4\Participant::get()
-    ->addWhere('id', '=', $p)
-    ->addSelect('contact_id')
-    ->execute()
-    ->first();
-
-  if (!$participant) {
-    fail('participant not found');
-  }
-
-  // --- CHECK EXISTING ---
-  $existing = \Civi\Api4\Participant::get()
-    ->addWhere('contact_id', '=', $participant['contact_id'])
-    ->addWhere('event_id', '=', $s)
-    ->execute()
-    ->count();
-
-  if ($existing) {
-    echo json_encode(['status' => 'already_checked_in']);
-    exit;
-  }
-
-  // --- CREATE CHECK-IN ---
-  $new = \Civi\Api4\Participant::create()
-    ->addValue('contact_id', $participant['contact_id'])
-    ->addValue('event_id', $s)
-    ->addValue('status_id', 'Attended') // adjust if needed
-    ->execute()
-    ->first();
-
-  // --- RESPONSE ---
-  echo json_encode([
-    'status' => 'ok',
-    'participant_id' => $p,
-    'session_id' => $s,
-    'participant_record_id' => $new['id'],
-  ]);
-  
 })();

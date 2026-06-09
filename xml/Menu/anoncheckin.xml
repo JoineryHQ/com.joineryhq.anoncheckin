@@ -1,2 +1,10 @@
 <?xml version="1.0"?>
-<menu></menu>
+<menu>
+  <item>
+    <path>civicrm/anoncheckin/testqrcodes</path>
+    <page_callback>CRM_Anoncheckin_Page_Testqrcodes</page_callback>
+    <title>Anonymous Checkin: Test QR codes</title>
+    <access_callback>1</access_callback>
+    <is_public>true</is_public>
+  </item>
+</menu>
