@@ -5,6 +5,7 @@ namespace Civi\Api4\Action\Anoncheckin;
 use Civi\Api4\Generic\AbstractAction;
 use \Civi\Api4\Generic\Result;
 
+// fixme: is this needed under extern?
 class GetParticipant extends AbstractAction {
 
 

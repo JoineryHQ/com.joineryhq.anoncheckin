@@ -2,6 +2,7 @@
 
 namespace Civi\Api4;
 
+// fixme: is this needed under extern?
 class Anoncheckin extends Generic\AbstractEntity {
 
   /**

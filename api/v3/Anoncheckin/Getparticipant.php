@@ -1,6 +1,8 @@
 <?php
 use CRM_Anoncheckin_ExtensionUtil as E;
 
+// fixme: is this needed under extern?
+
 /**
  * Anoncheckin.Getparticipant API specification (optional)
  * This is used for documentation and validation.

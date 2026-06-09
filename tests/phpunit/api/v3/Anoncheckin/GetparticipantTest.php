@@ -1,5 +1,7 @@
 <?php
 
+// fixme: is this needed under extern?
+
 use Civi\Test\CiviEnvBuilder;
 use Civi\Test\HeadlessInterface;
 use Civi\Test\HookInterface;

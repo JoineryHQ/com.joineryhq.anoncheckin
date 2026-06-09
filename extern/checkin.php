@@ -16,11 +16,8 @@
   // declare session manager
   $session = CRM_Anoncheckin_Utils_Session::singleton();
 
-//  $session->setMessage('This is an error', 'error');
-//  $session->setMessage('This is success', 'success');
-//  $session->setMessage('This is info');
-
   if (($_GET['reset'] ?? '') == 1) {
+    // fixme: this is for dev testing only, to be removed.
     $session->reset();
     header("Location: ". $_SERVER['PHP_SELF']);
     exit;    
