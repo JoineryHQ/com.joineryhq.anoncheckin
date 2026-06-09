@@ -3,10 +3,15 @@
 
   // get cached vars.
   require_once(__DIR__ . '/cache/vars.php');
-  $secret = $anoncheckinConfig['hmac_secret'];
+  $anoncheckinConfig = json_decode(
+    file_get_contents(__DIR__ . '/cache/config.json'),
+    TRUE
+  );
+  
+  $secret = $anoncheckinConfig['hmacSecret'];
 
   // initialize civicrm
-  require_once $anoncheckinConfig['civicrm_settings_path'];
+  require_once $anoncheckinConfig['civicrmSettingsPath'];
   require_once 'CRM/Core/Config.php';
   CRM_Core_Config::singleton();
 

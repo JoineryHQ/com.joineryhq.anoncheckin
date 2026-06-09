@@ -1,12 +1,13 @@
 <?php
+
 declare(strict_types = 1);
+
 use CRM_Anoncheckin_ExtensionUtil as E;
 
 /**
  * Collection of upgrade steps.
  */
 final class CRM_Anoncheckin_Upgrader extends \CRM_Extension_Upgrader_Base {
-
   // By convention, functions that look like "function upgrade_NNNN()" are
   // upgrade tasks. They are executed in order (like Drupal's hook_update_N).
 
@@ -20,22 +21,14 @@ final class CRM_Anoncheckin_Upgrader extends \CRM_Extension_Upgrader_Base {
   // }
 
   /**
-   * Example: Work with entities usually not available during the install step.
-   *
-   * This method can be used for any post-install tasks. For example, if a step
-   * of your installation depends on accessing an entity that is itself
-   * created during the installation (e.g., a setting or a managed entity), do
-   * so here to avoid order of operation problems.
+   * On install.
    */
-  // public function postInstall(): void {
-  //  $customFieldId = civicrm_api3('CustomField', 'getvalue', array(
-  //    'return' => array("id"),
-  //    'name' => "customFieldCreatedViaManagedHook",
-  //  ));
-  //  civicrm_api3('Setting', 'create', array(
-  //    'myWeirdFieldSetting' => array('id' => $customFieldId, 'weirdness' => 1),
-  //  ));
-  // }
+  public function postInstall(): void {
+    // Ensure hmac secret exist
+    CRM_Anoncheckin_Utils_Config::createHmacSecretIfEmpty();
+    // Ensure extern config file has latest values.
+    CRM_Anoncheckin_Utils_Config::writeConfigFile(TRUE);
+  }
 
   /**
    * Example: Run an external SQL script when the module is uninstalled.
@@ -47,11 +40,14 @@ final class CRM_Anoncheckin_Upgrader extends \CRM_Extension_Upgrader_Base {
   // }
 
   /**
-   * Example: Run a simple query when a module is enabled.
+   * On enable.
    */
-  // public function enable(): void {
-  //  CRM_Core_DAO::executeQuery('UPDATE foo SET is_active = 1 WHERE bar = "whiz"');
-  // }
+  public function enable(): void {
+    // Ensure hmac secret exist
+    CRM_Anoncheckin_Utils_Config::createHmacSecretIfEmpty();
+    // Ensure extern config file has latest values.
+    CRM_Anoncheckin_Utils_Config::writeConfigFile(TRUE);
+  }
 
   /**
    * Example: Run a simple query when a module is disabled.
@@ -94,7 +90,6 @@ final class CRM_Anoncheckin_Upgrader extends \CRM_Extension_Upgrader_Base {
    */
   // public function upgrade_4202(): bool {
   //   $this->ctx->log->info('Planning update 4202'); // PEAR Log interface
-
   //   $this->addTask(E::ts('Process first step'), 'processPart1', $arg1, $arg2);
   //   $this->addTask(E::ts('Process second step'), 'processPart2', $arg3, $arg4);
   //   $this->addTask(E::ts('Process second step'), 'processPart3', $arg5);
@@ -113,7 +108,6 @@ final class CRM_Anoncheckin_Upgrader extends \CRM_Extension_Upgrader_Base {
    */
   // public function upgrade_4203(): bool {
   //   $this->ctx->log->info('Planning update 4203'); // PEAR Log interface
-
   //   $minId = CRM_Core_DAO::singleValueQuery('SELECT coalesce(min(id),0) FROM civicrm_contribution');
   //   $maxId = CRM_Core_DAO::singleValueQuery('SELECT coalesce(max(id),0) FROM civicrm_contribution');
   //   for ($startId = $minId; $startId <= $maxId; $startId += self::BATCH_SIZE) {

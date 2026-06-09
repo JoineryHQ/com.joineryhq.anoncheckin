@@ -8,6 +8,21 @@ require_once 'anoncheckin.civix.php';
 use CRM_Anoncheckin_ExtensionUtil as E;
 
 /**
+ * Implements hook_civicrm_check().
+ *
+ * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_check/
+ *
+ */
+function anoncheckin_civicrm_check(&$messages, $statusNames = [], $includeDisabled = FALSE) {
+  // We're cheating a little, in that we'll never send a "system check" message about this.
+
+  // Ensure hmac secret exist
+  CRM_Anoncheckin_Utils_Config::createHmacSecretIfEmpty();
+  // Ensure extern config file has latest values.
+  CRM_Anoncheckin_Utils_Config::writeConfigFile();
+}
+
+/**
  * Implements hook_civicrm_config().
  *
  * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_config/
