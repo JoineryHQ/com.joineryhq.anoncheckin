@@ -205,7 +205,13 @@
 
             // (b) check for param
             const hasParam = testedUrl.searchParams.has(paramName);
-            return samePage && hasParam;
+            if (samePage && hasParam) {
+              return true;
+            }
+            else {
+              console.log('invalid url: ' + testedUrl);
+              return false;
+            }
           }
 
           function hideScanner() {
