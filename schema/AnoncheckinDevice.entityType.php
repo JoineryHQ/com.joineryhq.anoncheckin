@@ -54,6 +54,7 @@ return [
   'getIndices' => fn() => [
     'index_device_key' => [
       'fields' => ['device_key' => TRUE],
+      'unique' => TRUE,
     ],    
     'index_device_status_id' => [
       'fields' => ['device_status_id' => TRUE],

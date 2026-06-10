@@ -17,7 +17,11 @@
   CRM_Core_Config::singleton();
 
   // declare page object for output
-  $page = new CRM_Anoncheckin_Extern_Page();
+  $app = new CRM_Anoncheckin_Extern_App();
+  $app->run();
+  
+  $app->print();
+  
   
   // declare session manager
   $session = CRM_Anoncheckin_Utils_Session::singleton();
@@ -27,13 +31,6 @@
     $session->reset();
     header("Location: ". $_SERVER['PHP_SELF']);
     exit;    
-  }
-  // validate input or fail
-  if ($_REQUEST['s'] && !CRM_Anoncheckin_Utils_Value::validateValue($_REQUEST['s'], $_REQUEST['sh'])) {
-    $page->fatal('Invalid input.');
-  }
-  if ($_REQUEST['p'] && !CRM_Anoncheckin_Utils_Value::validateValue($_REQUEST['p'], $_REQUEST['ph'])) {
-    $page->fatal('Invalid input.');
   }
 
   // store input in sesion
@@ -60,11 +57,11 @@
     }
     else {
       if (CRM_Anoncheckin_Utils_Data::recordParticipantSession($pid, $sid)) {
-        $message = $page->ts("We've recorded your attendance at <em>%1</em>", ['1' => $sessionTitle]);
+        $message = $app->ts("We've recorded your attendance at <em>%1</em>", ['1' => $sessionTitle]);
         $session->setMessage($message, 'success');
       }
       else {
-        $message = $page->ts("We couldn't record your attendance at %1. Please try again.", ['1' => $sessionTitle]);
+        $message = $app->ts("We couldn't record your attendance at %1. Please try again.", ['1' => $sessionTitle]);
         $session->setMessage($message, 'error');
       }
     }
@@ -79,24 +76,24 @@
       $session->setMessage('You are already checked into this session. See your attended sessions below.', 'success');
     }
     else {
-      $page->assign('s', $sid);
-      $page->assign('sh', CRM_Anoncheckin_Utils_Value::generateHmac($sid));
-      $page->assign('sessionTitle', $sessionTitle);
+      $app->assign('s', $sid);
+      $app->assign('sh', CRM_Anoncheckin_Utils_Value::generateHmac($sid));
+      $app->assign('sessionTitle', $sessionTitle);
     }
   }
   
-  $page->assign('participantName', $participantName);
-  $page->assign('p', $pid);
-  $page->assign('ph', CRM_Anoncheckin_Utils_Value::generateHmac($pid));
+  $app->assign('participantName', $participantName);
+  $app->assign('p', $pid);
+  $app->assign('ph', CRM_Anoncheckin_Utils_Value::generateHmac($pid));
   
   // load attendance list
   $attendedSessionTitles = [];
   $participantSessions = CRM_Anoncheckin_Utils_Data::getParticipantSessions($pid);
   foreach ($participantSessions as $participantSession) {
-    $attendedSessionTitles[] = $page->ts($participantSession);
+    $attendedSessionTitles[] = $app->ts($participantSession);
   }
-  $page->assign('attendedSessionNames', $attendedSessionTitles);
+  $app->assign('attendedSessionNames', $attendedSessionTitles);
   
-  $page->print();
+  $app->print();
 
 })();

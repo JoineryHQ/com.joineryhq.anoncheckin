@@ -18,14 +18,14 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
 
     $query = "select p.id from civicrm_participant p inner join civicrm_contact c on c.id = p.contact_id where c.contact_type = 'individual' and c.id > 500 limit 1";
     $pid = CRM_Core_DAO::singleValueQuery($query);
-    $indivAppUrl = $this->getAppUrl(['p' => $pid]);
+    $indivAppUrl = $this->getAppUrl(['p' => $pid, 'h' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)]);
     $indivQrUrl = $this->getQrImageUrl($indivAppUrl, '0B3D91');
     $this->assign('indivAppUrl', $indivAppUrl);
     $this->assign('indivQrUrl', $indivQrUrl);
 
     $sessionUrls = [];
     foreach ($sessionTitles as $sessionId => $sessionTitle) {
-      $appUrl = $this->getAppUrl(['s' => $sessionId]);
+      $appUrl = $this->getAppUrl(['s' => $sessionId, 'h' => CRM_Anoncheckin_Utils_Value::generateSignature($sessionId)]);
       $sessionUrls[] = [
         'title' => $sessionTitle,
         'app' => $appUrl,
@@ -40,7 +40,7 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
   private function getAppUrl($params = []) {
     $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $host   = $_SERVER['HTTP_HOST'];
-    $base = $scheme . '://' . $host . '/wp-content/uploads/civicrm/ext/com.joineryhq.anoncheckin/extern/checkin.php';
+    $base = CRM_Anoncheckin_Utils_Extern::getAppUrl();
     if (!empty($params)) {
       $url = $base . '?' . http_build_query($params);
     }
