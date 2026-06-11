@@ -30,39 +30,64 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
     $sessionQrColor = '1B5E20';
 
     $indivUrls = [];
-    $query = "select p.id as pid, p.contact_id as cid, c.display_name from civicrm_participant p inner join civicrm_contact c on c.id = p.contact_id where p.event_id = %1 and c.contact_type = 'individual' and c.id > 500 limit 1";
+    $query = "
+      select p.id as pid, 
+        p.contact_id as cid, 
+        c.display_name 
+      from civicrm_participant p 
+        inner join civicrm_contact c on c.id = p.contact_id 
+      where p.event_id = %1 
+        and c.contact_type = 'individual' 
+        and c.id > 500 
+      limit 2
+    ";
     $queryParams = [
       1 => [$eventId, 'Int'],
     ];
     $dao = CRM_Core_DAO::executeQuery($query, $queryParams);
-    $dao->fetch();
-    $participant = $dao->toArray();
-    $pid = $participant['pid'];
-    $cid = $participant['cid'];
-    $displayName = $participant['display_name'];
-    $indivAppUrl = $this->getAppUrl(['p' => $pid, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)]);
-    $indivUrls[] = [
-      'title' => "$displayName ($pid)",
-      'app' => $indivAppUrl,
-      'qr'  => CRM_Anoncheckin_Utils_Qr::getQrImageUrl($indivAppUrl, $badgeQrColor)
+    $dao = CRM_Core_DAO::executeQuery($query, $queryParams);
+    while ($dao->fetch()) {
+      $participant = $dao->toArray();
+      $pid = $participant['pid'];
+      $cid = $participant['cid'];
+      $displayName = $participant['display_name'];
+      $indivAppUrl = $this->getAppUrl(['p' => $pid, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)]);
+      $indivUrls[] = [
+        'title' => "$displayName ($pid)",
+        'app' => $indivAppUrl,
+        'qr'  => CRM_Anoncheckin_Utils_Qr::getQrImageUrl($indivAppUrl, $badgeQrColor)
+      ];
+    }
+
+    $query = "
+      select p.id as pid, 
+        p.contact_id as cid, 
+        c.display_name 
+      from civicrm_participant p 
+        inner join civicrm_contact c on c.id = p.contact_id 
+      where p.event_id != %1 
+        and c.contact_type = 'individual' 
+        and c.id > 500 
+      limit 1
+    ";
+    $queryParams = [
+      1 => [$eventId, 'Int'],
     ];
-    $query = "select p.id as pid, p.contact_id as cid, c.display_name from civicrm_participant p inner join civicrm_contact c on c.id = p.contact_id where p.event_id = %1 and c.contact_type = 'individual' and c.id > 500 and c.id != %2 limit 1";
-    $params = [
-      1 => [$eventId, 'String'],
-      2 => [$cid, 'String'],
-    ];    
-    $dao = CRM_Core_DAO::executeQuery($query, $params);
-    $dao->fetch();
-    $participant = $dao->toArray();
-    $pid = $participant['pid'];
-    $cid = $participant['cid'];
-    $displayName = $participant['display_name'];
-    $indivAppUrl = $this->getAppUrl(['p' => $pid, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)]);
-    $indivUrls[] = [
-      'title' => "$displayName ($pid)",
-      'app' => $indivAppUrl,
-      'qr'  => CRM_Anoncheckin_Utils_Qr::getQrImageUrl($indivAppUrl, $badgeQrColor)
-    ];
+    $dao = CRM_Core_DAO::executeQuery($query, $queryParams);
+    $dao = CRM_Core_DAO::executeQuery($query, $queryParams);
+    while ($dao->fetch()) {
+      $participant = $dao->toArray();
+      $pid = $participant['pid'];
+      $cid = $participant['cid'];
+      $displayName = $participant['display_name'];
+      $indivAppUrl = $this->getAppUrl(['p' => $pid, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)]);
+      $indivUrls[] = [
+        'title' => "$displayName ($pid)",
+        'app' => $indivAppUrl,
+        'qr'  => CRM_Anoncheckin_Utils_Qr::getQrImageUrl($indivAppUrl, 'ff0000')
+      ];
+    }
+    
     $this->assign('indivUrls', $indivUrls);
 
     $sessionUrls = [];
