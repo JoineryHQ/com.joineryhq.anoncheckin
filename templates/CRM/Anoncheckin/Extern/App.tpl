@@ -422,6 +422,19 @@
           {* they're not trying to scan a session, so prompt them to do so. *}
           <button id="anoncheckin-scan-session" data-scan-type="s" class="button success">Scan a session QR code</button>          
         {/if}
+        
+        <!-- Show saved sessions -->
+        {if !empty($participantSessions)}
+          <div class="card">
+            <h2>Your Attended Sessions</h2>
+            <ul class="list">
+              {foreach from=$participantSessions item=participantSession}
+                <li>{$participantSession.title}</li>
+              {/foreach}
+            </ul>
+          </div>
+        {/if}
+        
       {/if}
 
     {/if}
@@ -467,7 +480,7 @@
 *}
 {*      </div>*}
 
-      <!-- Saved sessions -->
+{*      <!-- Saved sessions -->
       {if !empty($attendedSessionNames)}
         <div class="card">
           <h2>Your Attended Sessions</h2>
@@ -479,6 +492,8 @@
         </div>
       {/if}
     {/if}
+*}
+      {/if}
 
     <!-- debug messages -->
     {if !empty($debugMessages)}

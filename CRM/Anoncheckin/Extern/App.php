@@ -24,6 +24,11 @@ class CRM_Anoncheckin_Extern_App {
     if ($deviceKey) {
       $this->device = CRM_Anoncheckin_Utils_ExternData::getDeviceByKey($deviceKey);
     }
+    if ($this->device['participantId']) {
+      $this->participant = CRM_Anoncheckin_Utils_ExternData::getParticipantInfo($this->device['participantId']);
+      $this->participantSessions = CRM_Anoncheckin_Utils_ExternData::getParticipantSessions($this->device['participantId']);
+    }
+    
   }
 
   public function run() {
@@ -43,14 +48,11 @@ class CRM_Anoncheckin_Extern_App {
       $this->device = [];
     }
 
-    if ($this->device['participantId']) {
-      $this->participant = CRM_Anoncheckin_Utils_ExternData::getParticipantInfo($this->device['participantId']);
-      $this->participantSessions = CRM_Anoncheckin_Utils_ExternData::getParticipantSessions($this->device['participantId']);
-    }
     $this->assign('participantName', ($this->participant['displayName'] ?? NULL));
     $deviceIsLocked = (bool)$this->getDeviceLockedPid();
     $this->assign('deviceIsLocked', $deviceIsLocked);
     $this->assign('isDebug', $this->debug);
+    $this->assign('participantSessions', $this->participantSessions);
 
 
     // Run the appropriate action.
@@ -204,17 +206,17 @@ class CRM_Anoncheckin_Extern_App {
       $this->redirectClean();      
     }
     
-    // Is this participant already registered for a session in the same group?
-    // That's not allowed. Tell them their other session will be replaced.
+    // Compare this session to existing participant sessions.
     $session = CRM_Anoncheckin_Utils_ExternData::getSessionInfo($s);
     foreach ($this->participantSessions as $participantSession) {
       if ($participantSession['sessionId'] == $s) {
+        // Already recorded this session.
         $this->setUserMessage("You've already recorded this session (<strong>{$session['title']}</strong>).", 'success');
         $this->redirectClean();      
       }
-      if (
-        $participantSession['session_group_id'] == $session['session_group_id']
-      ) {
+      if ($participantSession['sessionGroupId'] == $session['sessionGroupId']) {
+        // Is this participant already recorded another session in the same group.
+        // That's not allowed. Tell them their other session will be replaced.
         $this->fatal('fixme: this should not be fatal: participant already recored another session in this group.');
       }
     }

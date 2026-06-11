@@ -17,7 +17,9 @@ class CRM_Anoncheckin_Utils_ExternData {
       SELECT s.title, sp.*
       FROM civicrm_anoncheckin_session_participant sp
         INNER JOIN civicrm_anoncheckin_session s ON s.id = sp.session_id
+        INNER JOIN civicrm_anoncheckin_session_group sg ON sg.id = s.session_group_id
       WHERE sp.participant_id = %1
+      ORDER BY sg.start_datetime_utc, s.title
     ";
     $params = [1 => [$pid, 'Integer']];
 
@@ -56,7 +58,7 @@ class CRM_Anoncheckin_Utils_ExternData {
   
   public static function getSessionInfo(int $session_id): ?array {
     $sql = "
-      SELECT s.title, sg.start_datetime_utc, sg.end_datetime_utc, sg.timezone, sg.event_id
+      SELECT s.title, sg.start_datetime_utc, sg.end_datetime_utc, sg.timezone, sg.event_id, s.session_group_id
       FROM civicrm_anoncheckin_session s
         INNER JOIN civicrm_anoncheckin_session_group sg ON sg.id = s.session_group_id
       WHERE s.id = %1
