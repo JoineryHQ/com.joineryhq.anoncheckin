@@ -151,6 +151,33 @@ class CRM_Anoncheckin_Utils_ExternData {
     );
   }
 
+  public static function insertDeviceLog(int $deviceId, int $eventTypeId, string $details): int {
+
+    $sql = "
+      INSERT INTO civicrm_anoncheckin_device_log (
+        device_id,
+        event_type_id,
+        details
+      ) VALUES (
+        %1,
+        %2,
+        %3
+      )
+    ";
+
+    $params = [
+      1 => [$deviceId, 'Integer'],
+      2 => [$eventTypeId, 'Integer'],
+      3 => [$details, 'String'],
+    ];
+
+    CRM_Core_DAO::executeQuery($sql, $params);
+
+    return (int) CRM_Core_DAO::singleValueQuery(
+      "SELECT LAST_INSERT_ID()"
+    );
+  }
+
   /**
    * Record a session for the participant on a given device
    * 

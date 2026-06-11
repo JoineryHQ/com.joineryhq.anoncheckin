@@ -254,9 +254,9 @@ class CRM_Anoncheckin_Extern_App {
 
   }
   private function fatal($message) {
-    // fixme: stub
     $this->assign('isFatal', TRUE);
     $this->setUserMessage($message, 'error');
+    CRM_Anoncheckin_Utils_ExternData::insertDeviceLog($this->device['deviceId'], CRM_Anoncheckin_Utils_Extern::DEVICE_LOG_TYPE_USER, $message);
     $this->print();
   }
 
