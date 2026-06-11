@@ -371,8 +371,12 @@
       {if $participantName}
         <div class="card center">
           <h2>
-            {$participantName}{if $deviceIsLocked} <i id="anoncheckin-participantNameLock" class="fa fa-lock"></i> <a id="change-p-link" href="?a=change_p">Change</a>{/if}
+            {$participantName}
+            {if $deviceIsLocked} <i id="anoncheckin-participantNameLock" class="fa fa-lock"></i> <a id="change-p-link" href="?a=change_p">Change</a>{/if}
           </h2>
+          {if $participantEventTitle}
+            <h3>At event: "{$participantEventTitle}"</h3>
+          {/if}
         </div>
       {/if}
 

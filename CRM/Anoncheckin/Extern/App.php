@@ -161,6 +161,7 @@ class CRM_Anoncheckin_Extern_App {
         $this->fatal("The badge for \"<strong>{$badgeParticipant['displayName']}</strong>\" has been locked by another device ({$deviceLockedToPid['userAgentShort']}). To record sessions on <em>this</em> device, please see a staff member for assistance.");
       }
       // If we're still here, user has an unlocked device, and their badge is also not locked elsewhere.
+      $this->assign('participantEventTitle', $badgeParticipant['eventTitle']);
       $this->assign('participantName', $badgeParticipant['displayName']);
       $this->setDebugMessage(__FUNCTION__ . ': assign participantName = '. $badgeParticipant['displayName']);
     }

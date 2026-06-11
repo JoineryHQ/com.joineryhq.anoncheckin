@@ -36,10 +36,11 @@ class CRM_Anoncheckin_Utils_ExternData {
 
   public static function selectParticipantInfo(int $pid): ?array {
     $sql = "
-      SELECT c.display_name, p.event_id
+      SELECT c.display_name, p.event_id, e.title as event_title
       FROM civicrm_participant p
-      INNER JOIN civicrm_contact c
-        ON c.id = p.contact_id
+        INNER JOIN civicrm_contact c
+          ON c.id = p.contact_id
+        INNER JOIN civicrm_event e on e.id = p.event_id
       WHERE p.id = %1
     ";
     $params = [1 => [$pid, 'Integer']];
@@ -228,10 +229,11 @@ die($sql);
   }
 
   /**
-   * Get all properties of a device for a given deviceKey.
+   * Get all properties of a device for a given deviceKey (ignoring any devices
+   * with status='closed')
    *
    * @param string $deviceKey
-   * @return array|null
+   * @return array|null If device found, an array of device properties; otherwise null.
    */
   public static function selectDeviceByKey(string $deviceKey): ?array {
 
@@ -239,10 +241,12 @@ die($sql);
       SELECT d.id as device_id, d.*
       FROM civicrm_anoncheckin_device d
       WHERE d.device_key = %1
+        AND d.device_status_id != %2
     ";
 
     $params = [
       1 => [$deviceKey, 'String'],
+      2 => [CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_CLOSED, 'Integer'],
     ];
 
     $dao = CRM_Core_DAO::executeQuery($sql, $params);

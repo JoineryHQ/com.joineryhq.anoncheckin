@@ -32,10 +32,12 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
     $indivUrls = [];
     $query = "
       select p.id as pid, 
+        e.title as event_title,
         p.contact_id as cid, 
         c.display_name 
       from civicrm_participant p 
         inner join civicrm_contact c on c.id = p.contact_id 
+        inner join civicrm_event e on e.id = p.event_id
       where p.event_id = %1 
         and c.contact_type = 'individual' 
         and c.id > 500 
@@ -51,9 +53,10 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
       $pid = $participant['pid'];
       $cid = $participant['cid'];
       $displayName = $participant['display_name'];
+      $eventTitle = $participant['event_title'];
       $indivAppUrl = $this->getAppUrl(['p' => $pid, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)]);
       $indivUrls[] = [
-        'title' => "$displayName ($pid)",
+        'title' => "$displayName at \"{$eventTitle}\" ($pid)",
         'app' => $indivAppUrl,
         'qr'  => CRM_Anoncheckin_Utils_Qr::getQrImageUrl($indivAppUrl, $badgeQrColor)
       ];
@@ -61,10 +64,12 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
 
     $query = "
       select p.id as pid, 
+        e.title as event_title,
         p.contact_id as cid, 
         c.display_name 
       from civicrm_participant p 
         inner join civicrm_contact c on c.id = p.contact_id 
+        inner join civicrm_event e on e.id = p.event_id
       where p.event_id != %1 
         and c.contact_type = 'individual' 
         and c.id > 500 
@@ -80,9 +85,10 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
       $pid = $participant['pid'];
       $cid = $participant['cid'];
       $displayName = $participant['display_name'];
+      $eventTitle = $participant['event_title'];
       $indivAppUrl = $this->getAppUrl(['p' => $pid, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)]);
       $indivUrls[] = [
-        'title' => "$displayName ($pid)",
+        'title' => "$displayName at \"{$eventTitle}\" ($pid)",
         'app' => $indivAppUrl,
         'qr'  => CRM_Anoncheckin_Utils_Qr::getQrImageUrl($indivAppUrl, 'ff0000')
       ];
