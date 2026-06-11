@@ -13,23 +13,31 @@ class CRM_Anoncheckin_Utils_Device {
   const DEVICE_STATUS_INVALIDATED = 3;
   const DEVICE_STATUS_CLOSED = 4;
   
-  public static function initializeDevice($participantId) {
+  public static function createDevice() : array {
     $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
     $userAgentShort = self::getUserAgentShort($userAgent);
-    $deviceStatusId = self::DEVICE_STATUS_LOCKED;
+    $deviceStatusId = self::DEVICE_STATUS_PENDING;
     $deviceKey = self::generateDeviceKey();
-    $deviceId = CRM_Anoncheckin_Utils_ExternData::createDevice($deviceKey, $participantId, $userAgent, $userAgentShort, $deviceStatusId);
+    $deviceId = CRM_Anoncheckin_Utils_ExternData::insertDevice($deviceKey, $userAgent, $userAgentShort, $deviceStatusId);
     
-    // Return key, not id.
+    // Return all device attributes.
     return [
       'userAgent' => $userAgent,
       'userAgentShort' => $userAgentShort,
       'deviceStatusId' => $deviceStatusId,
       'deviceKey' => $deviceKey,
       'deviceId' => $deviceId,
-      'participantId' => $participantId,
     ];
   }
+  
+  public static function lockDeviceToParticipant($device, $participantId) {
+    $deviceParams = [
+      'participantId' => $participantId,
+      'deviceStatusId' => self::DEVICE_STATUS_LOCKED,
+    ];
+    CRM_Anoncheckin_Utils_ExternData::updateDevice($device['deviceKey'], $deviceParams);
+  }
+  
   
   private static function generateDeviceKey() {
     return bin2hex(random_bytes(32));

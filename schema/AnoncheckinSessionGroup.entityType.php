@@ -66,6 +66,7 @@ return [
       'title' => ts('Timezone'),
       'sql_type' => 'varchar(64)',
       'input_type' => 'Text',
+      'required' => TRUE,
       'description' => ts('IANA timezone identifier used when converting session times to and from UTC, e.g. America/New_York.'),
     ],
 

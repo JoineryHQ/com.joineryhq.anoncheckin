@@ -82,6 +82,11 @@ return [
       'title' => E::ts('Device'),
       'sql_type' => 'int unsigned',
       'input_type' => 'EntityRef',
+      // Not required because devices are ultimately ephemeral, but session_participant
+      // is durable and valuable. Therefore, device_id is "nice to have" but nullable;
+      // also, FK is 'on delete set null' for the same reason, so this column
+      // must accept a null value.
+//      'required' => FALSE,
       'description' => E::ts('Device used for check-in'),
       'entity_reference' => [
         'entity' => 'AnoncheckinDevice',

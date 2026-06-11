@@ -10,12 +10,19 @@ class CRM_Anoncheckin_Utils_Extern {
   const SESSION_STATUS_COMPLETED = 1;
   const SESSION_STATUS_TRANSFERRED = 2;
   const SESSION_STATUS_INVALIDATED = 3;
+  
+  const DEVICE_LOG_TYPE_USER = 1;
+  const DEVICE_LOG_TYPE_ADMIN = 2;
 
   public static function getAppUrl() {
     
     return E::url('extern/app.php');
   }
 
+  public static function initializeDevice() {
+    $device = CRM_Anoncheckin_Utils_Device::createDevice();
+    self::setUserDeviceKey($device['deviceKey']);    
+  }
   /**
    * Get the current device token from cookie.
    */
@@ -31,7 +38,7 @@ class CRM_Anoncheckin_Utils_Extern {
       'anoncheckin_device',
       $deviceId,
       [
-        'expires' => time() + (86400 * 30), // 30 days
+        'expires' => time() + (86400 * 2), // 30 days
         'path' => '/',
         'secure' => TRUE,
         'httponly' => TRUE,

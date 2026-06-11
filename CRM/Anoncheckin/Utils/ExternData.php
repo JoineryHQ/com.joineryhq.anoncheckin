@@ -12,7 +12,7 @@ class CRM_Anoncheckin_Utils_ExternData {
    * @param Int $pid Participant ID.
    * @return Array One array member per session, with keyed properties for each. Empty array if none found.
    */
-  public static function getParticipantSessions(int $pid): ?array {
+  public static function selectParticipantSessions(int $pid): ?array {
     $sql = "
       SELECT s.title, sp.*
       FROM civicrm_anoncheckin_session_participant sp
@@ -34,7 +34,7 @@ class CRM_Anoncheckin_Utils_ExternData {
     return $ret;
   }
 
-  public static function getParticipantInfo(int $pid): ?array {
+  public static function selectParticipantInfo(int $pid): ?array {
     $sql = "
       SELECT c.display_name, p.event_id
       FROM civicrm_participant p
@@ -56,7 +56,7 @@ class CRM_Anoncheckin_Utils_ExternData {
 
   }
   
-  public static function getSessionInfo(int $session_id): ?array {
+  public static function selectSessionInfo(int $session_id): ?array {
     $sql = "
       SELECT s.title, sg.start_datetime_utc, sg.end_datetime_utc, sg.timezone, sg.event_id, s.session_group_id
       FROM civicrm_anoncheckin_session s
@@ -78,6 +78,41 @@ class CRM_Anoncheckin_Utils_ExternData {
   }
 
   /**
+   * Update the properties for a device entry.
+   *
+   * @param string $deviceKey Value of _device.device_key (Notice: that's key, not id)
+   * @param array $deviceParams Device attributes, keyed to camelCase attribute names.
+   * 
+   * @return int Number of affected rows -- should be either 1 or 0, since $deviceKey is required and unique.
+   */
+  public static function updateDevice(string $deviceKey, array $deviceParams): int {
+    $sets = [];
+    $queryParams = [];
+    $set_counter = 1;
+    foreach ($deviceParams as $deviceParamKey => $deviceParamValue) {
+      $columnName = self::camelToSnake($deviceParamKey);
+      $sets[] = "$columnName = %{$set_counter}";
+      // We're going to treat all values as strings here. Yes, some are ints,
+      // but string will work fine (until we hit a fatal sql query error, but that's
+      // just as fatal as DAO's "value was not of type Int").
+      $queryParams[$set_counter] = [$deviceParamValue, 'String'];
+      $set_counter++;
+    }
+    $query = "
+      UPDATE civicrm_anoncheckin_device
+      SET
+    "
+    . implode(', ', $sets) 
+    . "
+      WHERE device_key = %{$set_counter}
+    ";
+    $queryParams[$set_counter] = [$deviceKey, 'String'];
+    $dao = CRM_Core_DAO::executeQuery($query, $queryParams);
+    $ret = $dao->affectedRows();
+    return $ret;
+  }
+
+  /**
    * Create a device entry.
    *
    * @param string $deviceKey
@@ -86,12 +121,11 @@ class CRM_Anoncheckin_Utils_ExternData {
    * @param int $deviceStatusId
    * @return int Created device.id
    */
-  public static function createDevice(string $deviceKey, int $participantId, string $userAgent, string $userAgentShort, int $deviceStatusId): int {
+  public static function insertDevice(string $deviceKey, string $userAgent, string $userAgentShort, int $deviceStatusId): int {
 
     $sql = "
       INSERT INTO civicrm_anoncheckin_device (
         device_key,
-        participant_id,
         user_agent,
         user_agent_short,
         device_status_id
@@ -99,17 +133,15 @@ class CRM_Anoncheckin_Utils_ExternData {
         %1,
         %2,
         %3,
-        %4,
-        %5
+        %4
       )
     ";
 
     $params = [
       1 => [$deviceKey, 'String'],
-      2 => [$participantId, 'String'],
-      3 => [$userAgent, 'String'],
-      4 => [$userAgentShort, 'String'],
-      5 => [$deviceStatusId, 'Integer'],
+      2 => [$userAgent, 'String'],
+      3 => [$userAgentShort, 'String'],
+      4 => [$deviceStatusId, 'Integer'],
     ];
 
     CRM_Core_DAO::executeQuery($sql, $params);
@@ -126,7 +158,7 @@ class CRM_Anoncheckin_Utils_ExternData {
    * @param array $device
    * @return int
    */
-  public static function createSessionOnDevice(int $sessionId, array $device): int {
+  public static function insertSessionOnDevice(int $sessionId, array $device): int {
 
     $now = gmdate('Y-m-d H:i:s');
     $sql = "
@@ -174,7 +206,7 @@ die($sql);
    * @param string $deviceKey
    * @return array|null
    */
-  public static function getDeviceByKey(string $deviceKey): ?array {
+  public static function selectDeviceByKey(string $deviceKey): ?array {
 
     $sql = "
       SELECT d.id as device_id, d.*
@@ -197,7 +229,7 @@ die($sql);
     return $ret;
   }  
   
-  public static function getLockedDeviceByPid(string $pid): ?array {
+  public static function selectLockedDeviceByPid(string $pid): ?array {
 
     $sql = "
       SELECT *
@@ -227,6 +259,12 @@ die($sql);
     $first = array_shift($parts);
 
     return $first . implode('', array_map('ucfirst', $parts));
+  }
+  
+  private static function camelToSnake(string $value): string {
+    return strtolower(
+      preg_replace('/([a-z])([A-Z])/', '$1_$2', $value)
+    );
   }  
   
   private static function rowToArray($row) {

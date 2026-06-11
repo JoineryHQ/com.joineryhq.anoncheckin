@@ -19,14 +19,23 @@ class CRM_Anoncheckin_Extern_App {
     $this->appUrl = CRM_Anoncheckin_Utils_Extern::getAppUrl();
     $this->debug = Civi::settings()->get('debug_enabled');
     
-    // Populate device if user has one already.
     $deviceKey = CRM_Anoncheckin_Utils_Extern::getUserDeviceKey();
     if ($deviceKey) {
-      $this->device = CRM_Anoncheckin_Utils_ExternData::getDeviceByKey($deviceKey);
+      // If user's device has been initialized, populate $this->device.
+      $this->device = CRM_Anoncheckin_Utils_ExternData::selectDeviceByKey($deviceKey);
     }
+    if (empty($this->device)) {
+      // If $this->device is still empty, then we're in one of two situatios:
+      // - user-device has never visited before and has no cookie; OR
+      // - user-device has a cookie, but a corresponding deviceKey no longer
+      // exists in the DB. 
+      // Either way, we need to (re-)initialize this device.
+      $this->device = CRM_Anoncheckin_Utils_Extern::initializeDevice();      
+    }
+
     if ($this->device['participantId']) {
-      $this->participant = CRM_Anoncheckin_Utils_ExternData::getParticipantInfo($this->device['participantId']);
-      $this->participantSessions = CRM_Anoncheckin_Utils_ExternData::getParticipantSessions($this->device['participantId']);
+      $this->participant = CRM_Anoncheckin_Utils_ExternData::selectParticipantInfo($this->device['participantId']);
+      $this->participantSessions = CRM_Anoncheckin_Utils_ExternData::selectParticipantSessions($this->device['participantId']);
     }
     
   }
@@ -97,7 +106,7 @@ class CRM_Anoncheckin_Extern_App {
 
     // is this device locked?
     $lockedPid = $this->getDeviceLockedPid();
-    $lockedParticipant = CRM_Anoncheckin_Utils_ExternData::getParticipantInfo($lockedPid);
+    $lockedParticipant = CRM_Anoncheckin_Utils_ExternData::selectParticipantInfo($lockedPid);
     if ($lockedPid) {
       // device is locked to some other pid.
       $this->setDebugMessage("Device is already locked to a different participant: ". var_export($this->device, 1));
@@ -138,16 +147,16 @@ class CRM_Anoncheckin_Extern_App {
       else {
         // device is locked to some other pid.
         $this->setDebugMessage("Device is already locked to a different participant: ". var_export($this->device, 1));
-        $lockedParticipant = CRM_Anoncheckin_Utils_ExternData::getParticipantInfo($lockedPid);
+        $lockedParticipant = CRM_Anoncheckin_Utils_ExternData::selectParticipantInfo($lockedPid);
         $this->fatalLocked($lockedParticipant['displayName']);
       }
     }
     else {
       // We'll need the badge participant info soon.
-      $badgeParticipant = CRM_Anoncheckin_Utils_ExternData::getParticipantInfo($p);
+      $badgeParticipant = CRM_Anoncheckin_Utils_ExternData::selectParticipantInfo($p);
       // This device is not locked.
       // But is this badge locked to someone other device?
-      $deviceLockedToPid = CRM_Anoncheckin_Utils_ExternData::getLockedDeviceByPid($p);
+      $deviceLockedToPid = CRM_Anoncheckin_Utils_ExternData::selectLockedDeviceByPid($p);
       if (!empty($deviceLockedToPid)) {
         $this->fatal("The badge for \"<strong>{$badgeParticipant['displayName']}</strong>\" has been locked by another device ({$deviceLockedToPid['userAgentShort']}). To record sessions on <em>this</em> device, please see a staff member for assistance.");
       }
@@ -173,11 +182,10 @@ class CRM_Anoncheckin_Extern_App {
 
 
     // Lock device to badge.
-    $this->device = CRM_Anoncheckin_Utils_Device::initializeDevice($p);
-    CRM_Anoncheckin_Utils_Extern::setUserDeviceKey($this->device['deviceKey']);
+    $this->device = CRM_Anoncheckin_Utils_Device::lockDeviceToParticipant($this->device, $p);
     $this->setDebugMessage("Device locked: ". var_export($this->sdevice, 1));
 
-    $this->participant = CRM_Anoncheckin_Utils_ExternData::getParticipantInfo($p);
+    $this->participant = CRM_Anoncheckin_Utils_ExternData::selectParticipantInfo($p);
     $this->setUserMessage("Your device has now been locked to the badge named: {$this->participant['displayName']}", 'success');
 
     // Redirect to clean app.
@@ -194,7 +202,7 @@ class CRM_Anoncheckin_Extern_App {
       $this->redirectClean();      
     }
     // session exists in the same event as participant? If not, tell them that session's not available: message and redirectClean.
-    $session = CRM_Anoncheckin_Utils_ExternData::getSessionInfo($s);
+    $session = CRM_Anoncheckin_Utils_ExternData::selectSessionInfo($s);
     if ($session['eventId'] != $this->participant['eventId']) {
       $this->setUserMessage("The session you have selected (<strong>{$session['title']}</strong>) is not available for attendance recording.", 'error');
       $this->redirectClean();
@@ -207,7 +215,7 @@ class CRM_Anoncheckin_Extern_App {
     }
     
     // Compare this session to existing participant sessions.
-    $session = CRM_Anoncheckin_Utils_ExternData::getSessionInfo($s);
+    $session = CRM_Anoncheckin_Utils_ExternData::selectSessionInfo($s);
     foreach ($this->participantSessions as $participantSession) {
       if ($participantSession['sessionId'] == $s) {
         // Already recorded this session.
@@ -234,7 +242,7 @@ class CRM_Anoncheckin_Extern_App {
       $this->setUserMessage('Please scan your badge first to establish your identity.', 'info');
       $this->redirectClean();      
     }
-    CRM_Anoncheckin_Utils_ExternData::createSessionOnDevice($s, $this->device);
+    CRM_Anoncheckin_Utils_ExternData::insertSessionOnDevice($s, $this->device);
   }
   
   private function validateInput() {

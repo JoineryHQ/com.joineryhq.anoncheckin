@@ -26,4 +26,5 @@ VALUES
   ('Tuesday 11:30 — Strategic Shock', 8),
   ('Tuesday 2:15 — Elimination of Local Property Tax: Legislative Referendum', 9),
   ('Tuesday 3:30 — FPPTA Annual Membership Meeting', 10),
-  ('Wednesday 8:45 — Embrace the Shake', 11);
+  ('Wednesday 8:45 — Embrace the Shake', 11),
+  ('Monday 8:00 — Alternate Session', 1);

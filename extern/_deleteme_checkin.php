@@ -49,7 +49,7 @@
   $sid = $session->get('sid');
 
   $sessionTitle = CRM_Anoncheckin_Utils_Data::getSessionTitle($sid);
-  $participantName = CRM_Anoncheckin_Utils_ExternData::getParticipantInfo($pid);
+  $participantName = CRM_Anoncheckin_Utils_ExternData::selectParticipantInfo($pid);
   
   // if POST: process input.
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {

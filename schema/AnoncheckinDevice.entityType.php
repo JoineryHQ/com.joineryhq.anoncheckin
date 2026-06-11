@@ -31,18 +31,21 @@ return [
       'title' => E::ts('Device Key'),
       'sql_type' => 'varchar(255)',
       'input_type' => 'Text',
+      'required' => TRUE,
       'description' => E::ts('Unique string key for each device'),
     ],
     'user_agent' => [
       'title' => E::ts('User Agent String'),
       'sql_type' => 'varchar(512)',
       'input_type' => 'Text',
+      'required' => TRUE,
       'description' => E::ts('Full raw user-agent string'),
     ],
     'user_agent_short' => [
       'title' => E::ts('User Agent, Short'),
       'sql_type' => 'varchar(255)',
       'input_type' => 'Text',
+      'required' => TRUE,
       'description' => E::ts('Human-readable user agent, e.g. "Chrome on Android"'),
     ],
     'device_status_id' => [
