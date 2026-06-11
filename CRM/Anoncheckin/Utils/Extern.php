@@ -14,14 +14,14 @@ class CRM_Anoncheckin_Utils_Extern {
   /**
    * Get the current device token from cookie.
    */
-  public static function getUserDeviceId(): ?string {
+  public static function getUserDeviceKey(): ?string {
     return $_COOKIE['anoncheckin_device'] ?? NULL;
   }
 
   /**
    * Set the current device token cookie.
    */
-  public static function setUserDeviceId(string $deviceId): void {
+  public static function setUserDeviceKey(string $deviceId): void {
     setcookie(
       'anoncheckin_device',
       $deviceId,

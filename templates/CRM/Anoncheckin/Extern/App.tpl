@@ -5,8 +5,8 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
     <link rel="stylesheet" id="ls-global-css" href="/wp-content/plugins/civicrm/civicrm/css/crm-i.css" media="all">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css"/>    
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css"/>
+
     <style>
       body {
         font-family: sans-serif;
@@ -35,6 +35,8 @@
         border-radius: 6px;
         background: #007bff;
         color: #fff;
+        box-sizing: border-box;
+        text-decoration: none;
       }
       .button.secondary {
         background: #6c757d;
@@ -185,6 +187,10 @@
       #anoncheckin-participantNameLock {
         color: green;
       }
+      a#change-p-link {
+        font-size: .5em;
+        color: green;
+      }
     </style>
     <script>
       {literal}
@@ -216,6 +222,8 @@
             }
             else {
               console.log('invalid url: ' + testedUrl);
+              console.log('samePage: ' + samePage);
+              console.log('hasParam: ' + hasParam, paramName);
               return false;
             }
           }
@@ -326,7 +334,7 @@
 
         });
       {/literal}
-    </script>      
+    </script>
   </head>
   <body>
     <h1>Session Attendance</h1>
@@ -344,64 +352,147 @@
       {/foreach}
     {/if}
 
-    <!-- User -->
-    <div class="card center">
+    {if $isStaffInfo}
+        <div class="card">
+          <h2>Staff Info</h2>
+          <table>
+            {foreach from=$device key=deviceKey item=deviceValue}
+              <tr><td><strong>{$deviceKey}:</strong></td><td>{$deviceValue}</td></tr>
+            {/foreach}
+          </table>
+          <img src="{$deviceQrUrl}">
+        </div>
+    {/if}
+    {if $isFatal || $isStaffInfo}
+      <div class="card center">
+        <a class="button secondary" href="{$appUrl}">OK</a>
+      </div>
+    {else}
       {if $participantName}
-        <h2>{$participantName} <i id="anoncheckin-participantNameLock" class="fa fa-lock"></i></h2>
-        {assign var="buttonClass" value="secondary"}
-        <button id="anoncheckin-not-me" class="button secondary">This is not me!</button>
-      {else}
-        <p></p>
-        {assign var="buttonClass" value="success"}
-        {assign var="buttonLabel" value="Scan my badge"}
-        <button id="anoncheckin-scan-badge" data-scan-type="p" class="button {$buttonClass}">{$buttonLabel}</button>
+        <div class="card center">
+          <h2>
+            {$participantName}{if $deviceIsLocked} <i id="anoncheckin-participantNameLock" class="fa fa-lock"></i> <a id="change-p-link" href="?a=change_p">Change</a>{/if}
+          </h2>
+        </div>
       {/if}
 
-      <!-- Session selection -->
-      {if $sessionTitle}
-        <h2>{$sessionTitle}</h2>
-        {assign var="buttonClass" value="secondary"}
-        {assign var="buttonLabel" value="Re-scan session QR code"}
-      {else}
-        <p></p>
-        {assign var="buttonClass" value="success"}
-        {assign var="buttonLabel" value="Scan a session QR code"}
+      {if !$deviceIsLocked && $action != "action_get_p"}
+        <div class="card center">
+          <p></p>
+          {assign var="buttonClass" value="success"}
+          {assign var="buttonLabel" value="Scan my badge"}
+          <button id="anoncheckin-scan-badge" data-scan-type="p" class="button {$buttonClass}">{$buttonLabel}</button>
+        </div>
       {/if}
-      <button id="anoncheckin-scan-session" data-scan-type="s" class="button {$buttonClass}">{$buttonLabel}</button>
 
-      {if $p && $s}
-        <form method="post">
-          <input type="hidden" name="p" value="{$p}">
-          <input type="hidden" name="ph" value="{$ph}">
-          <input type="hidden" name="s" value="{$s}">
-          <input type="hidden" name="sh" value="{$sh}">
-          <!-- Confirm -->
-          <input type="submit" class="button success" value="Confirm and save">
-        </form>
-
+      {if $action == 'action_get_p'}
+        <div class="card center">
+          <h2>Are you sure?</h2>
+          <p>You are about to lock this device to the badge for <strong>{$participantName}</strong>.</p>
+          <p>Once locked, you will need staff assistance to unlock.</p>
+          <form method="post">
+            <input type="hidden" name="p" value="{$p}">
+            <input type="hidden" name="ph" value="{$ph}">
+            <!-- Confirm -->
+            <input type="submit" class="button success" value="Yes, lock my device to this badge.">
+            <button id="anoncheckin-scan-badge" data-scan-type="p" class="button secondary">No, that's not me. Scan another badge.</button>
+          </form>
+        </div>
       {/if}
-    </div>
+      {if $deviceIsLocked && $participantName}
+        <div class="card center">
+          <!-- Session selection -->
+          {if $s && $action == "action_get_s"}
+            <h2>{$sessionTitle}</h2>
+            {assign var="buttonClass" value="secondary"}
+            {assign var="buttonLabel" value="Re-scan session QR code"}
+          {else}
+            <p></p>
+            {assign var="buttonClass" value="success"}
+            {assign var="buttonLabel" value="Scan a session QR code"}
+          {/if}
+          <button id="anoncheckin-scan-session" data-scan-type="s" class="button {$buttonClass}">{$buttonLabel}</button>
+        </div>
+      {/if}
 
-    <!-- Saved sessions -->
-    {if !empty($attendedSessionNames)}
+    {/if}
+
+    {if $never}
+      <!-- User -->
+{*
+      <div class="card center">
+        {if $participantName}
+          <h2>{$participantName} <i id="anoncheckin-participantNameLock" class="fa fa-lock"></i></h2>
+          {assign var="buttonClass" value="secondary"}
+          <button id="anoncheckin-not-me" class="button secondary">This is not me!</button>
+        {else}
+          <p></p>
+          {assign var="buttonClass" value="success"}
+          {assign var="buttonLabel" value="Scan my badge"}
+          <button id="anoncheckin-scan-badge" data-scan-type="p" class="button {$buttonClass}">{$buttonLabel}</button>
+        {/if}
+*}
+{*        <!-- Session selection -->
+        {if $sessionTitle}
+          <h2>{$sessionTitle}</h2>
+          {assign var="buttonClass" value="secondary"}
+          {assign var="buttonLabel" value="Re-scan session QR code"}
+        {else}
+          <p></p>
+          {assign var="buttonClass" value="success"}
+          {assign var="buttonLabel" value="Scan a session QR code"}
+        {/if}
+        <button id="anoncheckin-scan-session" data-scan-type="s" class="button {$buttonClass}">{$buttonLabel}</button>
+*}
+        {if $p && $s}
+          <form method="post">
+            <input type="hidden" name="p" value="{$p}">
+            <input type="hidden" name="ph" value="{$ph}">
+            <input type="hidden" name="s" value="{$s}">
+            <input type="hidden" name="sh" value="{$sh}">
+            <!-- Confirm -->
+            <input type="submit" class="button success" value="Confirm and save">
+          </form>
+
+        {/if}
+{*      </div>*}
+
+      <!-- Saved sessions -->
+      {if !empty($attendedSessionNames)}
+        <div class="card">
+          <h2>Your Attended Sessions</h2>
+          <ul class="list">
+            {foreach from=$attendedSessionNames item=attendedSessionName}
+              <li>{$attendedSessionName}</li>
+              {/foreach}
+          </ul>
+        </div>
+      {/if}
+    {/if}
+
+    <!-- debug messages -->
+    {if !empty($debugMessages)}
       <div class="card">
-        <h2>Your Attended Sessions</h2>
+        <h2>Debug messages</h2>
         <ul class="list">
-          {foreach from=$attendedSessionNames item=attendedSessionName}
-            <li>{$attendedSessionName}</li>
+          {foreach from=$debugMessages item=debugMessage}
+            <li>{$debugMessage}</li>
             {/foreach}
         </ul>
       </div>
     {/if}
     <div id="admin-footer">
-      Admin/testing: <a href="?reset=1">Reset</a> | <a target="_blank" href="testQrCodes.php">QR Codes</a>
+      <a href="?a=staff_info">Staff Info</a> 
+      {if $isDebug}
+        | <a target="_blank" href="/civicrm/?page=CiviCRM&q=civicrm%2Fanoncheckin%2Ftestqrcodes">QR Codes</a>
+      {/if}
     </div>
     <div id="anoncheckin-scanner">
       <button id="anoncheckin-video-cancel">
         <svg id="site-nav-close" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
         <line x1="5" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line>
         <line x1="19" y1="5" x2="5" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line>
-        </svg>        
+        </svg>
       </button>
       <svg id="loading-indicator" viewBox="0 0 130 200" width="120" height="120" xmlns="http://www.w3.org/2000/svg">
       <circle class="dot" cx="15"  cy="65" r="15"/>

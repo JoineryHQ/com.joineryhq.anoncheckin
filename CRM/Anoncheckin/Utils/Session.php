@@ -60,6 +60,11 @@ class CRM_Anoncheckin_Utils_Session {
     return $this->_session->get(self::PREFIX);
   }
   
+  /**
+   * Add a user-facing status message for display.
+   * @param String $message The message body.
+   * @param String $type One of: info, error, success
+   */
   public function setMessage($message, $type = 'info') {
     $messages = $this->get('messages') ?? [];
     $messages[] = [

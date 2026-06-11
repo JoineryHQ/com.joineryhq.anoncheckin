@@ -6,30 +6,72 @@ use CRM_Anoncheckin_ExtensionUtil as E;
 class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
 
   public function run() {
-    // fixme: use real sessions for some given event.
-    $sessionTitles = [
-      1 => 'Session 1: Lorem ipsum dolor sit amet',
-      2 => 'Session 2: Sed vel orci vitae tellus maximus viverra',
-      3 => 'Session 3: Ut eu leo eget eros posuere efficitur eget ut purus',
-      4 => 'Session 4: Vivamus at ante scelerisque purus placerat fringilla',
-      5 => 'Session 5: Cras sed ex et libero efficitur maximus vitae sit amet nibh',
-    ];
-    
+    $eventId = 113;
 
-    $query = "select p.id from civicrm_participant p inner join civicrm_contact c on c.id = p.contact_id where c.contact_type = 'individual' and c.id > 500 limit 1";
-    $pid = CRM_Core_DAO::singleValueQuery($query);
-    $indivAppUrl = $this->getAppUrl(['p' => $pid, 'h' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)]);
-    $indivQrUrl = $this->getQrImageUrl($indivAppUrl, '0B3D91');
-    $this->assign('indivAppUrl', $indivAppUrl);
-    $this->assign('indivQrUrl', $indivQrUrl);
+    $sessions = [];
+    $query = "
+      select s.id, s.title 
+      from civicrm_anoncheckin_session s 
+        inner join civicrm_anoncheckin_session_group sg on sg.id = s.session_group_id
+      where
+        sg.event_id = %1
+      order by 
+        sg.start_datetime_utc, s.title
+    ";
+    $queryParams = [
+      1 => [$eventId, 'Int'],
+    ];
+    $dao = CRM_Core_DAO::executeQuery($query, $queryParams);
+    while ($dao->fetch()) {
+      $sessions[$dao->id] = $dao->title;
+    }
+    
+    $badgeQrColor = '0B3D91';
+    $sessionQrColor = '1B5E20';
+
+    $indivUrls = [];
+    $query = "select p.id as pid, p.contact_id as cid, c.display_name from civicrm_participant p inner join civicrm_contact c on c.id = p.contact_id where p.event_id = %1 and c.contact_type = 'individual' and c.id > 500 limit 1";
+    $queryParams = [
+      1 => [$eventId, 'Int'],
+    ];
+    $dao = CRM_Core_DAO::executeQuery($query, $queryParams);
+    $dao->fetch();
+    $participant = $dao->toArray();
+    $pid = $participant['pid'];
+    $cid = $participant['cid'];
+    $displayName = $participant['display_name'];
+    $indivAppUrl = $this->getAppUrl(['p' => $pid, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)]);
+    $indivUrls[] = [
+      'title' => "$displayName ($pid)",
+      'app' => $indivAppUrl,
+      'qr'  => $this->getQrImageUrl($indivAppUrl, $badgeQrColor)
+    ];
+    $query = "select p.id as pid, p.contact_id as cid, c.display_name from civicrm_participant p inner join civicrm_contact c on c.id = p.contact_id where p.event_id = %1 and c.contact_type = 'individual' and c.id > 500 and c.id != %2 limit 1";
+    $params = [
+      1 => [$eventId, 'String'],
+      2 => [$cid, 'String'],
+    ];    
+    $dao = CRM_Core_DAO::executeQuery($query, $params);
+    $dao->fetch();
+    $participant = $dao->toArray();
+    $pid = $participant['pid'];
+    $cid = $participant['cid'];
+    $displayName = $participant['display_name'];
+    $indivAppUrl = $this->getAppUrl(['p' => $pid, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)]);
+    $indivUrls[] = [
+      'title' => "$displayName ($pid)",
+      'app' => $indivAppUrl,
+      'qr'  => $this->getQrImageUrl($indivAppUrl, $badgeQrColor)
+    ];
+    $this->assign('indivUrls', $indivUrls);
 
     $sessionUrls = [];
-    foreach ($sessionTitles as $sessionId => $sessionTitle) {
-      $appUrl = $this->getAppUrl(['s' => $sessionId, 'h' => CRM_Anoncheckin_Utils_Value::generateSignature($sessionId)]);
+    foreach ($sessions as $sessionId => $sessionTitle) {
+      $appUrl = $this->getAppUrl(['s' => $sessionId, 'sh' => CRM_Anoncheckin_Utils_Value::generateSignature($sessionId)]);
       $sessionUrls[] = [
         'title' => $sessionTitle,
         'app' => $appUrl,
-        'qr'  => $this->getQrImageUrl($appUrl, '1B5E20')
+        'qr'  => $this->getQrImageUrl($appUrl, $sessionQrColor)
       ];
     }
     $this->assign('sessionUrls', $sessionUrls);
@@ -52,9 +94,4 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
     
   }
 
-  private function getQrImageUrl($dataUrl, $color = 'black') {
-    $ret = 'https://api.qrserver.com/v1/create-qr-code/?color='. $color .'&size=300&data=' . $dataUrl;
-    return $ret;
-  }
-  
 }

@@ -46,12 +46,27 @@ return [
       ],
     ],
 
-    'weight' => [
-      'title' => E::ts('Weight'),
-      'sql_type' => 'int',
-      'input_type' => 'Number',
-      'default' => 0,
-      'description' => E::ts('Display order'),
+    'start_datetime_utc' => [
+      'title' => E::ts('Start Date/Time'),
+      'sql_type' => 'datetime',
+      'input_type' => 'Date',
+      'required' => TRUE,
+      'description' => E::ts('Session start date and time, as utc'),
+    ],
+
+    'end_datetime_utc' => [
+      'title' => E::ts('End Date/Time'),
+      'sql_type' => 'datetime',
+      'input_type' => 'Date',
+      'required' => TRUE,
+      'description' => E::ts('Session end date and time, as utc'),
+    ],
+
+    'timezone' => [
+      'title' => ts('Timezone'),
+      'sql_type' => 'varchar(64)',
+      'input_type' => 'Text',
+      'description' => ts('IANA timezone identifier used when converting session times to and from UTC, e.g. America/New_York.'),
     ],
 
   ],

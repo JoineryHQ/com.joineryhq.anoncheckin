@@ -21,8 +21,14 @@ return [
       'primary_key' => TRUE,
       'auto_increment' => TRUE,
     ],
+    'participant_id' => [
+      'title' => E::ts('Participant ID'),
+      'sql_type' => 'varchar(255)',
+      'input_type' => 'Text',
+      'description' => E::ts('Unique string key for each device'),
+    ],
     'device_key' => [
-      'title' => E::ts('Contact ID'),
+      'title' => E::ts('Device Key'),
       'sql_type' => 'varchar(255)',
       'input_type' => 'Text',
       'description' => E::ts('Unique string key for each device'),

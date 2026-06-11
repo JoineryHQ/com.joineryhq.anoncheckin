@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <extension key="com.joineryhq.anoncheckin" type="module">
   <file>anoncheckin</file>
-  <name>com.joineryhq.anoncheckin</name>
-  <description>FIXME</description>
+  <name>Anonymous QR session check-in</name>
+  <description>Allows event participants to record attendance at break-out sessions without logging in.</description>
   <license>GPL-3.0</license>
   <authors>
     <author>
@@ -53,6 +53,7 @@
     <mixin>smarty@1.0.3</mixin>
     <mixin>menu-xml@1.0.0</mixin>
     <mixin>entity-types-php@2.0.0</mixin>
+    <mixin>setting-admin@1.0.1</mixin>
   </mixins>
   <upgrader>CiviMix\Schema\Anoncheckin\AutomaticUpgrader</upgrader>
 </extension>

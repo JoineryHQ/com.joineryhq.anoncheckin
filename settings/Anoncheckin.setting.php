@@ -8,16 +8,15 @@ return [
     'type' => 'String',
     // No other metadata, as this should be omitted from settings forms.
   ],
-  // Example copied from another extension, just for easy reference later.
-  //  'anoncheckin_limit_days' => [
-  //    'name' => 'anoncheckin_limit_days',
-  //    'type' => 'Int',
-  //    'title' => E::ts('Days before limiting'),
-  //    'description' => E::ts('Disqualifying contributions are older than this many days, per their %1 field value.', [1 => E::ts('Contribution Date')]),
-  //    'default' => 90,
-  //    'html_type' => 'text',
-  //    'is_domain' => 1,
-  //    'is_contact' => 0,
-  //    'settings_pages' => ['anoncheckin' => ['weight' => 10]],
-  //  ],
+  'anoncheckin_limit_checkin_minutes' => [
+    'name' => 'anoncheckin_limit_checkin_minutes',
+    'type' => 'Integer',
+    'title' => E::ts('Max time in minutes to allow check-in before/after a session'),
+    'description' => E::ts('Participants may only check in for a session within this many minutes before/after a session. To disable this limitation, set this to empty.'),
+    'default' => 30,
+    'html_type' => 'Text',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'settings_pages' => ['anoncheckin' => ['weight' => 10]],
+  ],
 ];

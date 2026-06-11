@@ -33,22 +33,6 @@ return [
       'description' => E::ts('Session title'),
     ],
 
-    'start_date' => [
-      'title' => E::ts('Start Date/Time'),
-      'sql_type' => 'datetime',
-      'input_type' => 'Date',
-      'required' => TRUE,
-      'description' => E::ts('Session start date and time'),
-    ],
-
-    'end_date' => [
-      'title' => E::ts('End Date/Time'),
-      'sql_type' => 'datetime',
-      'input_type' => 'Date',
-      'required' => TRUE,
-      'description' => E::ts('Session end date and time'),
-    ],
-
     'session_group_id' => [
       'title' => E::ts('Session Group'),
       'sql_type' => 'int unsigned',
@@ -61,15 +45,6 @@ return [
         'on_delete' => 'RESTRICT',
       ],
     ],
-
-    'weight' => [
-      'title' => E::ts('Weight'),
-      'sql_type' => 'int',
-      'input_type' => 'Number',
-      'default' => 0,
-      'description' => E::ts('Display order'),
-    ],
-
   ],
 
   'getIndices' => fn() => [

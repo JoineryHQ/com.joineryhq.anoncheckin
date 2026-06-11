@@ -7,9 +7,9 @@ use CRM_Anoncheckin_ExtensionUtil as E;
  */
 class CRM_Anoncheckin_Utils_ExternData {
 
-  public static function getParticipantName(int $pid): ?string {
+  public static function getParticipantInfo(int $pid): ?array {
     $sql = "
-      SELECT c.display_name
+      SELECT c.display_name, p.event_id
       FROM civicrm_participant p
       INNER JOIN civicrm_contact c
         ON c.id = p.contact_id
@@ -17,12 +17,27 @@ class CRM_Anoncheckin_Utils_ExternData {
     ";
     $params = [1 => [$pid, 'Integer']];
 
-    return CRM_Core_DAO::singleValueQuery(
-      $sql,
-      $params
-    );
+    $dao = CRM_Core_DAO::executeQuery($sql, $params);
+
+    if (!$dao->fetch()) {
+      return NULL;
+    }
+
+    $ret = [];
+
+    foreach ($dao->toArray() as $key => $value) {
+      $ret[self::snakeToCamel($key)] = $value;
+    }
+
+    return $ret;
+
   }
 
+  /**
+   * FIXME: untested
+   * @param int $pid
+   * @return array
+   */
   public static function getParticipantSessions(int $pid): array {
     $sql = "
       SELECT s.title
@@ -60,11 +75,12 @@ class CRM_Anoncheckin_Utils_ExternData {
    * @param int $deviceStatusId
    * @return int Created device.id
    */
-  public static function createDevice(string $deviceKey, string $userAgent, string $userAgentShort, int $deviceStatusId): int {
+  public static function createDevice(string $deviceKey, int $participantId, string $userAgent, string $userAgentShort, int $deviceStatusId): int {
 
     $sql = "
       INSERT INTO civicrm_anoncheckin_device (
         device_key,
+        participant_id,
         user_agent,
         user_agent_short,
         device_status_id
@@ -72,15 +88,17 @@ class CRM_Anoncheckin_Utils_ExternData {
         %1,
         %2,
         %3,
-        %4
+        %4,
+        %5
       )
     ";
 
     $params = [
       1 => [$deviceKey, 'String'],
-      2 => [$userAgent, 'String'],
-      3 => [$userAgentShort, 'String'],
-      4 => [$deviceStatusId, 'Integer'],
+      2 => [$participantId, 'String'],
+      3 => [$userAgent, 'String'],
+      4 => [$userAgentShort, 'String'],
+      5 => [$deviceStatusId, 'Integer'],
     ];
 
     CRM_Core_DAO::executeQuery($sql, $params);
@@ -90,4 +108,72 @@ class CRM_Anoncheckin_Utils_ExternData {
     );
   }
 
+  /**
+   * Get all properties of a device for a given deviceKey.
+   *
+   * @param string $deviceKey
+   * @return array|null
+   */
+  public static function getDeviceByKey(string $deviceKey): ?array {
+
+    $sql = "
+      SELECT *
+      FROM civicrm_anoncheckin_device
+      WHERE device_key = %1
+    ";
+
+    $params = [
+      1 => [$deviceKey, 'String'],
+    ];
+
+    $dao = CRM_Core_DAO::executeQuery($sql, $params);
+
+    if (!$dao->fetch()) {
+      return NULL;
+    }
+
+    $ret = [];
+
+    foreach ($dao->toArray() as $key => $value) {
+      $ret[self::snakeToCamel($key)] = $value;
+    }
+
+    return $ret;
+  }  
+  
+  public static function getLockedDeviceByPid(string $pid): ?array {
+
+    $sql = "
+      SELECT *
+      FROM civicrm_anoncheckin_device
+      WHERE participant_id = %1
+        AND device_status_id = %2
+    ";
+
+    $params = [
+      1 => [$pid, 'Int'],
+      2 => [CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_LOCKED, 'Int'],
+    ];
+
+    $dao = CRM_Core_DAO::executeQuery($sql, $params);
+
+    if (!$dao->fetch()) {
+      return NULL;
+    }
+
+    $ret = [];
+
+    foreach ($dao->toArray() as $key => $value) {
+      $ret[self::snakeToCamel($key)] = $value;
+    }
+
+    return $ret;
+  }
+  
+  public static function snakeToCamel(string $value): string {
+    $parts = explode('_', $value);
+    $first = array_shift($parts);
+
+    return $first . implode('', array_map('ucfirst', $parts));
+  }  
 }
