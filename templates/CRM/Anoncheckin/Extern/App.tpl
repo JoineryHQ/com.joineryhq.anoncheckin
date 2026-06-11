@@ -60,19 +60,35 @@
         border-bottom-left-radius: 0;
       }
       .card.message.message-type-error {
-        background: #f8d7da;
-        color: #842029;
         border-color: #cc1e2e;
       }
       .card.message.message-type-success {
-        background: #e6f4ea;
-        color: #1e7e34;
         border-color: #1e7e34;
       }
       .card.message.message-type-info {
+        border-color: #fdbd00;
+      }
+
+      .inline-message {
+        padding: 1rem;
+      }
+      
+      .card.message.message-type-error,
+      .inline-message.message-type-error {
+        background: #f8d7da;
+        color: #842029;
+      }
+      
+      .card.message.message-type-success,
+      .inline-message.message-type-success {
+        background: #e6f4ea;
+        color: #1e7e34;
+      }
+      
+      .card.message.message-type-info,
+      .inline-message.message-type-info {
         background: #fff3cd;
         color: #664d03;
-        border-color: #fdbd00;
       }
 
       #anoncheckin-overlay {
@@ -413,6 +429,11 @@
           <div class="card center">
             <!-- Session selection -->
             <h2>{$sessionTitle}</h2>
+            {if !empty($sessionOverwriteWarning)}
+              <div class="inline-message message-type-error">
+                WARNING: If you continue below, your session "{$sessionOverwriteWarning.oldTitle}" will be replaced with this session, "{$sessionOverwriteWarning.newTitle}".
+              </div>
+            {/if}
             <p>Record your attendance at this session?</p>
             <form method="post">
               <input type="hidden" name="s" value="{$s}">

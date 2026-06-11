@@ -14,7 +14,7 @@ class CRM_Anoncheckin_Utils_ExternData {
    */
   public static function selectParticipantSessions(int $pid): ?array {
     $sql = "
-      SELECT s.title, sp.*
+      SELECT s.title, s.id as session_id, sp.id as session_participant_id, sp.*
       FROM civicrm_anoncheckin_session_participant sp
         INNER JOIN civicrm_anoncheckin_session s ON s.id = sp.session_id
         INNER JOIN civicrm_anoncheckin_session_group sg ON sg.id = s.session_group_id
@@ -56,10 +56,10 @@ class CRM_Anoncheckin_Utils_ExternData {
     return $ret;
 
   }
-  
+
   public static function selectSessionInfo(int $session_id): ?array {
     $sql = "
-      SELECT s.title, sg.start_datetime_utc, sg.end_datetime_utc, sg.timezone, sg.event_id, s.session_group_id
+      SELECT s.title, s.id as session_id, sg.start_datetime_utc, sg.end_datetime_utc, sg.timezone, sg.event_id, s.session_group_id
       FROM civicrm_anoncheckin_session s
         INNER JOIN civicrm_anoncheckin_session_group sg ON sg.id = s.session_group_id
       WHERE s.id = %1
@@ -83,7 +83,7 @@ class CRM_Anoncheckin_Utils_ExternData {
    *
    * @param string $deviceKey Value of _device.device_key (Notice: that's key, not id)
    * @param array $deviceParams Device attributes, keyed to camelCase attribute names.
-   * 
+   *
    * @return int Number of affected rows -- should be either 1 or 0, since $deviceKey is required and unique.
    */
   public static function updateDevice(string $deviceKey, array $deviceParams): int {
@@ -103,7 +103,7 @@ class CRM_Anoncheckin_Utils_ExternData {
       UPDATE civicrm_anoncheckin_device
       SET
     "
-    . implode(', ', $sets) 
+    . implode(', ', $sets)
     . "
       WHERE device_key = %{$set_counter}
     ";
@@ -181,7 +181,7 @@ class CRM_Anoncheckin_Utils_ExternData {
 
   /**
    * Record a session for the participant on a given device
-   * 
+   *
    * @param int $sessionId
    * @param array $device
    * @return int
@@ -198,8 +198,8 @@ class CRM_Anoncheckin_Utils_ExternData {
         modified_date,
         device_id,
         session_status_id
-      ) SELECT 
-        id, 
+      ) SELECT
+        id,
         %1,
         session_group_id,
         %2,
@@ -209,7 +209,7 @@ class CRM_Anoncheckin_Utils_ExternData {
         FROM civicrm_anoncheckin_session where id = %5;
     ";
 
-    
+
     $params = [
       1 => [$device['participantId'], 'Integer'],
       2 => [$now, 'String'],
@@ -219,7 +219,6 @@ class CRM_Anoncheckin_Utils_ExternData {
     ];
 
     $sql = CRM_Core_DAO::composeQuery($sql, $params);
-die($sql);
 
     CRM_Core_DAO::executeQuery($sql, $params);
 
@@ -258,8 +257,8 @@ die($sql);
     $ret = self::rowToArray($dao->toArray());
 
     return $ret;
-  }  
-  
+  }
+
   public static function selectLockedDeviceByPid(string $pid): ?array {
 
     $sql = "
@@ -284,20 +283,39 @@ die($sql);
 
     return $ret;
   }
-  
+
+  /**
+   * Delete a _session_participant record, per PK id.
+   *
+   * @param int Table PK id
+   *
+   * @return bool True if records were deleted; otherwise false.
+   */
+  public static function deleteSessionParticipant(int $sessionParticipantId): bool {
+    $query = "
+      DELETE FROM civicrm_anoncheckin_session_participant
+      WHERE id = %1
+    ";
+    $queryParams = [
+      1 => [$sessionParticipantId, 'Integer'],
+    ];
+    $dao = CRM_Core_DAO::executeQuery($query, $queryParams);
+    return (bool)$dao->affectedRows();
+  }
+
   private static function snakeToCamel(string $value): string {
     $parts = explode('_', $value);
     $first = array_shift($parts);
 
     return $first . implode('', array_map('ucfirst', $parts));
   }
-  
+
   private static function camelToSnake(string $value): string {
     return strtolower(
       preg_replace('/([a-z])([A-Z])/', '$1_$2', $value)
     );
-  }  
-  
+  }
+
   private static function rowToArray($row) {
     $ret = [];
     foreach ($row as $key => $value) {
@@ -310,4 +328,5 @@ die($sql);
     }
     return $ret;
   }
+  
 }

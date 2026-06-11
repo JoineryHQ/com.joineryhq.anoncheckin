@@ -61,7 +61,9 @@ class CRM_Anoncheckin_Extern_App {
     $deviceIsLocked = (bool)$this->getDeviceLockedPid();
     $this->assign('deviceIsLocked', $deviceIsLocked);
     $this->assign('isDebug', $this->debug);
-    $this->assign('participantSessions', $this->participantSessions);
+    if ($this->device['participantId'] ?? FALSE) {
+      $this->assign('participantSessions', CRM_Anoncheckin_Utils_ExternData::selectParticipantSessions($this->device['participantId']));
+    }
 
 
     // Run the appropriate action.
@@ -82,6 +84,10 @@ class CRM_Anoncheckin_Extern_App {
 
     if (!empty($actionFunctionName) && is_callable([$this, $actionFunctionName])) {
       $this->$actionFunctionName($actionValue);
+      // If method was POST, redirect to clean app.
+      if ($method == 'post') {
+        $this->redirectClean();
+      }
     }
     else {
       $this->fatal("Invalid action, attemped: ". $actionFunctionName);
@@ -212,18 +218,29 @@ class CRM_Anoncheckin_Extern_App {
     }
     
     // Compare this session to existing participant sessions.
-    $session = CRM_Anoncheckin_Utils_ExternData::selectSessionInfo($s);
-    foreach ($this->participantSessions as $participantSession) {
-      if ($participantSession['sessionId'] == $s) {
-        // Already recorded this session.
+    $sessionCompare = $this->compareSessionWithExisting($session);
+    switch ($sessionCompare) {
+      case 0:
+        // No duplicates or conflicts; nothing special to do here.
+        break;
+      case -1:
+        // Already recorded this session. We won't do anything here.
         $this->setUserMessage("You've already recorded this session (<strong>{$session['title']}</strong>).", 'success');
         $this->redirectClean();      
-      }
-      if ($participantSession['sessionGroupId'] == $session['sessionGroupId']) {
-        // Is this participant already recorded another session in the same group.
+        break;
+      default:
+        // Anything besides 0 (NONE) and -1 (DUPLICATE) represents a group-based CONFLICT.
+        // This participant already recorded another session in the same group.
         // That's not allowed. Tell them their other session will be replaced.
-        $this->fatal('fixme: this should not be fatal: participant already recored another session in this group.');
-      }
+        $sessionParticipantId = $sessionCompare;        
+        foreach($this->participantSessions as $participantSession) {
+          if ($participantSession['sessionParticipantId'] == $sessionParticipantId) {
+            $conflictingParticipantSession = $participantSession;
+            break;
+          }
+        }
+        $this->assign('sessionOverwriteWarning', ['oldTitle' => $conflictingParticipantSession['title'], 'newTitle' => $session['title']]);
+        break;
     }
 
     // Display session title and ask "are you sure?"
@@ -239,7 +256,36 @@ class CRM_Anoncheckin_Extern_App {
       $this->setUserMessage('Please scan your badge first to establish your identity.', 'info');
       $this->redirectClean();      
     }
-    CRM_Anoncheckin_Utils_ExternData::insertSessionOnDevice($s, $this->device);
+    
+    // Will we actually record this session?
+    $doRecordSession = FALSE;
+    $session = CRM_Anoncheckin_Utils_ExternData::selectSessionInfo($s);
+    $sessionCompare = $this->compareSessionWithExisting($session);
+    switch ($sessionCompare) {
+      case 0:
+        // No duplicates or conflicts; we'll record.
+        $doRecordSession = TRUE;
+        break;
+      case -1:
+        // Session already recorded. Just tell them it's recorded, and redirect to clean app.
+        $this->setUserMessage("You've been marked as attending session \"<strong>{$session['title']}</strong>\".", 'success');
+        $this->redirectClean();
+        break;
+      default:
+        // Anything besides 0 (NONE) and -1 (DUPLICATE) represents a group-based CONFLICT.
+        // This participant already recorded another session in the same group.
+        // But since this is POST, they've also confirmed that they want to replace this.
+        // So, we'll delete the old one and save this one.
+        $sessionParticipantId = $sessionCompare;
+        CRM_Anoncheckin_Utils_ExternData::deleteSessionParticipant($sessionParticipantId);
+        $doRecordSession = TRUE;
+        break;
+    }
+    
+    if ($doRecordSession) {
+      CRM_Anoncheckin_Utils_ExternData::insertSessionOnDevice($s, $this->device);
+      $this->setUserMessage("You've been marked as attending session \"<strong>{$session['title']}</strong>\".", 'success');
+    }
   }
   
   private function validateInput() {
@@ -263,6 +309,36 @@ class CRM_Anoncheckin_Extern_App {
   private function fatalLocked() {
     $participantName = $this->participant['displayName'];
     $this->fatal("Your device is locked to the badge for <strong>$participantName</strong>. If that's incorrect, please see a staff member for help.");
+  }
+
+  /**
+   * Given a certain session, determine whether there's conflict/redundancy in
+   * in this participant's existing sessions.
+   * 
+   * @param Array $session Session properties as returned by CRM_Anoncheckin_Utils_ExternData::selectSessionInfo()
+   * @return Int One of the following:
+   *   [sessonId]: CONFLICT: If participant has recorded a different session in
+   *    the same group, return the sessionParticipantId (civicrm_anoncheckin_session_participant.id) 
+   *    of that already-recorded session.
+   *   -1: DUPLICATE: Participant has already recorded this session.
+   *   0: NONE: None of the above is true (i.e. we can record this session).
+   */
+  private function compareSessionWithExisting(array $session): int{
+    if (empty($this->participantSessions)) {
+      $this->participantSessions = CRM_Anoncheckin_Utils_ExternData::selectParticipantSessions($this->device['participantId']);
+    }
+    foreach ($this->participantSessions as $participantSession) {
+      if ($participantSession['sessionId'] == $session['sessionId']) {
+        // Already recorded this session.
+        return -1;
+      }
+      if ($participantSession['sessionGroupId'] == $session['sessionGroupId']) {
+        // Already recorded another session in the same sessionGroup.
+        return $participantSession['sessionParticipantId'];
+      }
+    }
+    // If we're still here, there were no CONFLICTS or DUPLICATES. Return NONE.
+    return 0;
   }
 
   private function print() {
