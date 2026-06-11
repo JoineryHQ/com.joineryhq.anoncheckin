@@ -30,12 +30,23 @@ class CRM_Anoncheckin_Utils_Device {
     ];
   }
   
+  /**
+   * Lock a given device to the given participant.
+   * 
+   * @param type $device
+   * @param type $participantId
+   * 
+   * @return Boolean True on success, false on failure.
+   */
   public static function lockDeviceToParticipant($device, $participantId) {
+    if (empty($device['deviceKey'])) {
+      return FALSE;
+    }
     $deviceParams = [
       'participantId' => $participantId,
       'deviceStatusId' => self::DEVICE_STATUS_LOCKED,
     ];
-    CRM_Anoncheckin_Utils_ExternData::updateDevice($device['deviceKey'], $deviceParams);
+    return (bool)CRM_Anoncheckin_Utils_ExternData::updateDevice($device['deviceKey'], $deviceParams);
   }
   
   

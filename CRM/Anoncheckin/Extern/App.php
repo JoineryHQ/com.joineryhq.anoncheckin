@@ -109,8 +109,7 @@ class CRM_Anoncheckin_Extern_App {
     $lockedParticipant = CRM_Anoncheckin_Utils_ExternData::selectParticipantInfo($lockedPid);
     if ($lockedPid) {
       // device is locked to some other pid.
-      $this->setDebugMessage("Device is already locked to a different participant: ". var_export($this->device, 1));
-      $this->fatalLocked($lockedParticipant['displayName']);
+      $this->fatalLocked();
     }
 
     // If we're still here, it's a little strange, because the action was "change my participant id / i.e. unlock my device"),
@@ -146,9 +145,7 @@ class CRM_Anoncheckin_Extern_App {
       }
       else {
         // device is locked to some other pid.
-        $this->setDebugMessage("Device is already locked to a different participant: ". var_export($this->device, 1));
-        $lockedParticipant = CRM_Anoncheckin_Utils_ExternData::selectParticipantInfo($lockedPid);
-        $this->fatalLocked($lockedParticipant['displayName']);
+        $this->fatalLocked();
       }
     }
     else {
@@ -176,19 +173,18 @@ class CRM_Anoncheckin_Extern_App {
 
     // is this device locked to some other pid?
     if ($this->getDeviceLockedPid($p)) {
-      $this->setDebugMessage("Device is already locked to a different participant: ". var_export($device, 1));
-      // fixme: this is a fatal.
-      return;
+      $this->fatalLocked();
     }
 
 
     // Lock device to badge.
-    $this->device = CRM_Anoncheckin_Utils_Device::lockDeviceToParticipant($this->device, $p);
-    $this->setDebugMessage("Device locked: ". var_export($this->sdevice, 1));
-
-    $this->participant = CRM_Anoncheckin_Utils_ExternData::selectParticipantInfo($p);
-    $this->setUserMessage("Your device has now been locked to the badge named: {$this->participant['displayName']}", 'success');
-
+    if ($this->device = CRM_Anoncheckin_Utils_Device::lockDeviceToParticipant($this->device, $p)) {
+      $this->participant = CRM_Anoncheckin_Utils_ExternData::selectParticipantInfo($p);
+      $this->setUserMessage("Your device has now been locked to the badge named: {$this->participant['displayName']}", 'success');
+    }
+    else {
+      $this->fatal('There was a problem locking your device to this badge. Please try again.');
+    }
     // Redirect to clean app.
     $this->redirectClean();
   }
@@ -257,11 +253,15 @@ class CRM_Anoncheckin_Extern_App {
   private function fatal($message) {
     $this->assign('isFatal', TRUE);
     $this->setUserMessage($message, 'error');
-    CRM_Anoncheckin_Utils_ExternData::insertDeviceLog($this->device['deviceId'], CRM_Anoncheckin_Utils_Extern::DEVICE_LOG_TYPE_USER, $message);
+    if (!empty($this->device['deviceId'])) {
+      // In odd circumstances, there may be no device, so only log if we have one.
+      CRM_Anoncheckin_Utils_ExternData::insertDeviceLog($this->device['deviceId'], CRM_Anoncheckin_Utils_Extern::DEVICE_LOG_TYPE_USER, $message);
+    }
     $this->print();
   }
 
-  private function fatalLocked($participantName) {
+  private function fatalLocked() {
+    $participantName = $this->participant['displayName'];
     $this->fatal("Your device is locked to the badge for <strong>$participantName</strong>. If that's incorrect, please see a staff member for help.");
   }
 
