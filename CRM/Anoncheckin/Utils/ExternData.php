@@ -7,6 +7,31 @@ use CRM_Anoncheckin_ExtensionUtil as E;
  */
 class CRM_Anoncheckin_Utils_ExternData {
 
+  /**
+   * Get recorded sessions for this participant.
+   * @param Int $pid Participant ID.
+   * @return Array One array member per session, with keyed properties for each. Empty array if none found.
+   */
+  public static function getParticipantSessions(int $pid): ?array {
+    $sql = "
+      SELECT s.title, sp.*
+      FROM civicrm_anoncheckin_session_participant sp
+        INNER JOIN civicrm_anoncheckin_session s ON s.id = sp.session_id
+      WHERE sp.participant_id = %1
+    ";
+    $params = [1 => [$pid, 'Integer']];
+
+    $dao = CRM_Core_DAO::executeQuery($sql, $params);
+
+    if (!$dao->fetch()) {
+      return [];
+    }
+
+    $ret[] = self::rowToArray($dao->toArray());
+
+    return $ret;
+  }
+
   public static function getParticipantInfo(int $pid): ?array {
     $sql = "
       SELECT c.display_name, p.event_id
@@ -23,47 +48,31 @@ class CRM_Anoncheckin_Utils_ExternData {
       return NULL;
     }
 
-    $ret = [];
-
-    foreach ($dao->toArray() as $key => $value) {
-      $ret[self::snakeToCamel($key)] = $value;
-    }
+    $ret = self::rowToArray($dao->toArray());
 
     return $ret;
 
   }
-
-  /**
-   * FIXME: untested
-   * @param int $pid
-   * @return array
-   */
-  public static function getParticipantSessions(int $pid): array {
+  
+  public static function getSessionInfo(int $session_id): ?array {
     $sql = "
-      SELECT s.title
-      FROM civicrm_anoncheckin_session_participant sp
-      INNER JOIN civicrm_anoncheckin_session s
-        ON s.id = sp.session_id
-      INNER JOIN civicrm_anoncheckin_session_group sg
-        ON sg.id = s.session_group_id
-      WHERE sp.participant_id = %1
-      ORDER BY
-        sg.weight,
-        s.weight
+      SELECT s.title, sg.start_datetime_utc, sg.end_datetime_utc, sg.timezone, sg.event_id
+      FROM civicrm_anoncheckin_session s
+        INNER JOIN civicrm_anoncheckin_session_group sg ON sg.id = s.session_group_id
+      WHERE s.id = %1
     ";
-
-    $params = [
-      1 => [$pid, 'Integer'],
-    ];
+    $params = [1 => [$session_id, 'Integer']];
 
     $dao = CRM_Core_DAO::executeQuery($sql, $params);
 
-    $sessions = [];
-    while ($dao->fetch()) {
-      $sessions[] = $dao->title;
+    if (!$dao->fetch()) {
+      return NULL;
     }
 
-    return $sessions;
+    $ret = self::rowToArray($dao->toArray());
+
+    return $ret;
+
   }
 
   /**
@@ -109,6 +118,55 @@ class CRM_Anoncheckin_Utils_ExternData {
   }
 
   /**
+   * Record a session for the participant on a given device
+   * 
+   * @param int $sessionId
+   * @param array $device
+   * @return int
+   */
+  public static function createSessionOnDevice(int $sessionId, array $device): int {
+
+    $now = gmdate('Y-m-d H:i:s');
+    $sql = "
+      INSERT INTO civicrm_anoncheckin_session_participant (
+        session_id,
+        participant_id,
+        session_group_id,
+        created_date,
+        modified_date,
+        device_id,
+        session_status_id
+      ) SELECT 
+        id, 
+        %1,
+        session_group_id,
+        %2,
+        %2,
+        %3,
+        %4
+        FROM civicrm_anoncheckin_session where id = %5;
+    ";
+
+    
+    $params = [
+      1 => [$device['participantId'], 'Integer'],
+      2 => [$now, 'String'],
+      3 => [$device['deviceId'], 'Integer'],
+      4 => [CRM_Anoncheckin_Utils_Extern::SESSION_STATUS_COMPLETED, 'Integer'],
+      5 => [$sessionId, 'Integer'],
+    ];
+
+    $sql = CRM_Core_DAO::composeQuery($sql, $params);
+die($sql);
+
+    CRM_Core_DAO::executeQuery($sql, $params);
+
+    return (int) CRM_Core_DAO::singleValueQuery(
+      "SELECT LAST_INSERT_ID()"
+    );
+  }
+
+  /**
    * Get all properties of a device for a given deviceKey.
    *
    * @param string $deviceKey
@@ -117,9 +175,9 @@ class CRM_Anoncheckin_Utils_ExternData {
   public static function getDeviceByKey(string $deviceKey): ?array {
 
     $sql = "
-      SELECT *
-      FROM civicrm_anoncheckin_device
-      WHERE device_key = %1
+      SELECT d.id as device_id, d.*
+      FROM civicrm_anoncheckin_device d
+      WHERE d.device_key = %1
     ";
 
     $params = [
@@ -132,11 +190,7 @@ class CRM_Anoncheckin_Utils_ExternData {
       return NULL;
     }
 
-    $ret = [];
-
-    foreach ($dao->toArray() as $key => $value) {
-      $ret[self::snakeToCamel($key)] = $value;
-    }
+    $ret = self::rowToArray($dao->toArray());
 
     return $ret;
   }  
@@ -161,19 +215,28 @@ class CRM_Anoncheckin_Utils_ExternData {
       return NULL;
     }
 
-    $ret = [];
-
-    foreach ($dao->toArray() as $key => $value) {
-      $ret[self::snakeToCamel($key)] = $value;
-    }
+    $ret = self::rowToArray($dao->toArray());
 
     return $ret;
   }
   
-  public static function snakeToCamel(string $value): string {
+  private static function snakeToCamel(string $value): string {
     $parts = explode('_', $value);
     $first = array_shift($parts);
 
     return $first . implode('', array_map('ucfirst', $parts));
   }  
+  
+  private static function rowToArray($row) {
+    $ret = [];
+    foreach ($row as $key => $value) {
+      if ($key == 'id') {
+        // We will not handle keys named 'id' because they're often ambiguous.
+        // If you need that, name it something else, e.g. participant_id, etc.
+        continue;
+      }
+      $ret[self::snakeToCamel($key)] = $value;
+    }
+    return $ret;
+  }
 }

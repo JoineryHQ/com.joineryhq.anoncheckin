@@ -90,13 +90,6 @@ return [
       ],
     ],
 
-    'ip_address' => [
-      'title' => E::ts('IP Address'),
-      'sql_type' => 'varchar(45)',
-      'input_type' => 'Text',
-      'description' => E::ts('IPv4 or IPv6 address of the device'),
-    ],
-
     'session_status_id' => [
       'title' => E::ts('Session Status'),
       'sql_type' => 'int unsigned',

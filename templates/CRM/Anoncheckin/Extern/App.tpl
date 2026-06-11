@@ -365,7 +365,7 @@
     {/if}
     {if $isFatal || $isStaffInfo}
       <div class="card center">
-        <a class="button secondary" href="{$appUrl}">OK</a>
+        <a class="button secondary" href="{$appUrl}">Go Back</a>
       </div>
     {else}
       {if $participantName}
@@ -377,6 +377,7 @@
       {/if}
 
       {if !$deviceIsLocked && $action != "action_get_p"}
+        {* device is not locked, and they're not trying to scan a badge, so prompt to scan a badge. *}
         <div class="card center">
           <p></p>
           {assign var="buttonClass" value="success"}
@@ -386,6 +387,7 @@
       {/if}
 
       {if $action == 'action_get_p'}
+        {* They've scanned a badge, so ask them if they're sure. *}
         <div class="card center">
           <h2>Are you sure?</h2>
           <p>You are about to lock this device to the badge for <strong>{$participantName}</strong>.</p>
@@ -399,20 +401,27 @@
           </form>
         </div>
       {/if}
-      {if $deviceIsLocked && $participantName}
-        <div class="card center">
-          <!-- Session selection -->
-          {if $s && $action == "action_get_s"}
+
+      {if $deviceIsLocked}
+        {* device is locked. Good, now they can work with sessions *}
+        {if $action == "action_get_s"}
+          {* They've scanned a session QR. Ask them if they're sure. *}
+          <div class="card center">
+            <!-- Session selection -->
             <h2>{$sessionTitle}</h2>
-            {assign var="buttonClass" value="secondary"}
-            {assign var="buttonLabel" value="Re-scan session QR code"}
-          {else}
-            <p></p>
-            {assign var="buttonClass" value="success"}
-            {assign var="buttonLabel" value="Scan a session QR code"}
-          {/if}
-          <button id="anoncheckin-scan-session" data-scan-type="s" class="button {$buttonClass}">{$buttonLabel}</button>
-        </div>
+            <p>Record your attendance at this session?</p>
+            <form method="post">
+              <input type="hidden" name="s" value="{$s}">
+              <input type="hidden" name="sh" value="{$sh}">
+              <!-- Confirm -->
+              <input type="submit" class="button success" value="Yes, confirm and save">
+              <button id="anoncheckin-scan-session" data-scan-type="s" class="button secondary">No, scan a different session</button>
+            </form>
+          </div>
+        {else}
+          {* they're not trying to scan a session, so prompt them to do so. *}
+          <button id="anoncheckin-scan-session" data-scan-type="s" class="button success">Scan a session QR code</button>          
+        {/if}
       {/if}
 
     {/if}
@@ -444,7 +453,7 @@
         {/if}
         <button id="anoncheckin-scan-session" data-scan-type="s" class="button {$buttonClass}">{$buttonLabel}</button>
 *}
-        {if $p && $s}
+{*        {if $p && $s}
           <form method="post">
             <input type="hidden" name="p" value="{$p}">
             <input type="hidden" name="ph" value="{$ph}">
@@ -455,6 +464,7 @@
           </form>
 
         {/if}
+*}
 {*      </div>*}
 
       <!-- Saved sessions -->

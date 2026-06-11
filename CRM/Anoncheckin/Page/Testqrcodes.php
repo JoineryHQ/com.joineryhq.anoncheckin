@@ -44,7 +44,7 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
     $indivUrls[] = [
       'title' => "$displayName ($pid)",
       'app' => $indivAppUrl,
-      'qr'  => $this->getQrImageUrl($indivAppUrl, $badgeQrColor)
+      'qr'  => CRM_Anoncheckin_Utils_Qr::getQrImageUrl($indivAppUrl, $badgeQrColor)
     ];
     $query = "select p.id as pid, p.contact_id as cid, c.display_name from civicrm_participant p inner join civicrm_contact c on c.id = p.contact_id where p.event_id = %1 and c.contact_type = 'individual' and c.id > 500 and c.id != %2 limit 1";
     $params = [
@@ -61,7 +61,7 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
     $indivUrls[] = [
       'title' => "$displayName ($pid)",
       'app' => $indivAppUrl,
-      'qr'  => $this->getQrImageUrl($indivAppUrl, $badgeQrColor)
+      'qr'  => CRM_Anoncheckin_Utils_Qr::getQrImageUrl($indivAppUrl, $badgeQrColor)
     ];
     $this->assign('indivUrls', $indivUrls);
 
@@ -71,7 +71,7 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
       $sessionUrls[] = [
         'title' => $sessionTitle,
         'app' => $appUrl,
-        'qr'  => $this->getQrImageUrl($appUrl, $sessionQrColor)
+        'qr'  => CRM_Anoncheckin_Utils_Qr::getQrImageUrl($appUrl, $sessionQrColor)
       ];
     }
     $this->assign('sessionUrls', $sessionUrls);

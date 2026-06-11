@@ -7,6 +7,7 @@ class CRM_Anoncheckin_Extern_App {
 
   var $device = [];
   var $participant = [];
+  var $participantSessions = [];
   var $debugMessages = [];
   var $debug = FALSE;
   var $appUrl = '';
@@ -44,6 +45,7 @@ class CRM_Anoncheckin_Extern_App {
 
     if ($this->device['participantId']) {
       $this->participant = CRM_Anoncheckin_Utils_ExternData::getParticipantInfo($this->device['participantId']);
+      $this->participantSessions = CRM_Anoncheckin_Utils_ExternData::getParticipantSessions($this->device['participantId']);
     }
     $this->assign('participantName', ($this->participant['displayName'] ?? NULL));
     $deviceIsLocked = (bool)$this->getDeviceLockedPid();
@@ -184,10 +186,55 @@ class CRM_Anoncheckin_Extern_App {
    * Action: User has scanned a session code; prompt user to confirm session.
    */
   private function action_get_s($s) {
-    // session exists in the same event as participant?
-    // session start/end times are within allowed window?
+    // device is locked to a badge? if not, they gotta do that first: message and redirectClean.
+    if (empty($this->getDeviceLockedPid())) {
+      $this->setUserMessage('Please scan your badge first to establish your identity.', 'info');
+      $this->redirectClean();      
+    }
+    // session exists in the same event as participant? If not, tell them that session's not available: message and redirectClean.
+    $session = CRM_Anoncheckin_Utils_ExternData::getSessionInfo($s);
+    if ($session['eventId'] != $this->participant['eventId']) {
+      $this->setUserMessage("The session you have selected (<strong>{$session['title']}</strong>) is not available for attendance recording.", 'error');
+      $this->redirectClean();
+    }
+    
+    // session start/end times are within allowed window? If not, tell them that session's not available: message and redirectClean.
+    if (!CRM_Anoncheckin_Utils_Extern::sessionTimeIsValidNow($session)) {
+      $this->setUserMessage("The session you have selected (<strong>{$session['title']}</strong>) is not available for attendance recording.", 'error');
+      $this->redirectClean();      
+    }
+    
+    // Is this participant already registered for a session in the same group?
+    // That's not allowed. Tell them their other session will be replaced.
+    $session = CRM_Anoncheckin_Utils_ExternData::getSessionInfo($s);
+    foreach ($this->participantSessions as $participantSession) {
+      if ($participantSession['sessionId'] == $s) {
+        $this->setUserMessage("You've already recorded this session (<strong>{$session['title']}</strong>).", 'success');
+        $this->redirectClean();      
+      }
+      if (
+        $participantSession['session_group_id'] == $session['session_group_id']
+      ) {
+        $this->fatal('fixme: this should not be fatal: participant already recored another session in this group.');
+      }
+    }
+
+    // Display session title and ask "are you sure?"
+    $this->assign('sessionTitle', $session['title']);    
   }
 
+  /**
+   * Action: User has confirmed a session; record attendance.
+   */
+  private function action_post_s($s) {
+    // device is locked to a badge? if not, they gotta do that first: message and redirectClean.
+    if (empty($this->getDeviceLockedPid())) {
+      $this->setUserMessage('Please scan your badge first to establish your identity.', 'info');
+      $this->redirectClean();      
+    }
+    CRM_Anoncheckin_Utils_ExternData::createSessionOnDevice($s, $this->device);
+  }
+  
   private function validateInput() {
     foreach (['s', 'p'] as $varName) {
       if (!empty($_REQUEST[$varName]) && !CRM_Anoncheckin_Utils_Value::validateValue($_REQUEST[$varName], $_REQUEST["{$varName}h"])) {
