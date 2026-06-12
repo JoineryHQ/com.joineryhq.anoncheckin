@@ -356,6 +356,8 @@
     <h1>Session Attendance</h1>
 
     <!-- Intro -->
+    {* fixme: only show this if there's no participantName -- i.e., if they're
+     * scanning a badge or have already locked to a badge, this is not needed *}
     <div class="card center">
       <h2>Welcome</h2>
       <p>Record your sessions here.</p>

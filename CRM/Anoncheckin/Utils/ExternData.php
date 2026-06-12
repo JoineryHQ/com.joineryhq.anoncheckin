@@ -7,12 +7,15 @@ use CRM_Anoncheckin_ExtensionUtil as E;
  */
 class CRM_Anoncheckin_Utils_ExternData {
 
+  private static $cache = [];
+  
   /**
    * Get recorded sessions for this participant.
    * @param Int $pid Participant ID.
    * @return Array One array member per session, with keyed properties for each. Empty array if none found.
    */
   public static function selectParticipantSessions(int $pid): ?array {
+    $ret = [];
     $sql = "
       SELECT s.title, s.id as session_id, sp.id as session_participant_id, sp.*
       FROM civicrm_anoncheckin_session_participant sp
@@ -25,11 +28,9 @@ class CRM_Anoncheckin_Utils_ExternData {
 
     $dao = CRM_Core_DAO::executeQuery($sql, $params);
 
-    if (!$dao->fetch()) {
-      return [];
+    while ($dao->fetch()) {
+      $ret[] = self::rowToArray($dao->toArray());
     }
-
-    $ret[] = self::rowToArray($dao->toArray());
 
     return $ret;
   }
@@ -110,6 +111,14 @@ class CRM_Anoncheckin_Utils_ExternData {
     $queryParams[$set_counter] = [$deviceKey, 'String'];
     $dao = CRM_Core_DAO::executeQuery($query, $queryParams);
     $ret = $dao->affectedRows();
+    
+    if ($ret) {
+      // We've changed rows, so future calls to some methods should refresh cache.
+      self::cacheSelectClearActionArg('selectDeviceByKey', $deviceKey);
+      if (!empty($device['participantId'])) {
+        self::cacheSelectClearActionArg('selectLockedDeviceByPid', $device['participantId']);
+      }
+    }
     return $ret;
   }
 
@@ -222,6 +231,10 @@ class CRM_Anoncheckin_Utils_ExternData {
 
     CRM_Core_DAO::executeQuery($sql, $params);
 
+    // Assuming success (which we're assuming), this addition means that 
+    // future calls to selectParticipantSessions($pid) should refresh cache.
+    self::cacheSelectClearActionArg('selectParticipantSessions', $device['participantId']);
+      
     return (int) CRM_Core_DAO::singleValueQuery(
       "SELECT LAST_INSERT_ID()"
     );
@@ -300,7 +313,13 @@ class CRM_Anoncheckin_Utils_ExternData {
       1 => [$sessionParticipantId, 'Integer'],
     ];
     $dao = CRM_Core_DAO::executeQuery($query, $queryParams);
-    return (bool)$dao->affectedRows();
+    $ret = (bool)$dao->affectedRows();
+    
+    if ($ret) {
+      // We've changd rows, so future calls to deleteSessionParticipant should not use cache.
+      self::cacheSelectClearAction('deleteSessionParticipant');
+    }
+    return $ret;
   }
 
   private static function snakeToCamel(string $value): string {
@@ -329,4 +348,31 @@ class CRM_Anoncheckin_Utils_ExternData {
     return $ret;
   }
   
+  
+  public static function cacheSelectClearAction(string $action) {
+    unset(self::$cache[$action]);
+  }
+  
+  public static function cacheSelectClearActionArg(string $action, $arg) {
+    $argCacheKey = self::createArgCacheKey($arg);
+    unset(self::$cache[$action][$argCacheKey]);
+  }
+
+  private static function createArgCacheKey($arg): string {
+    return serialize($arg);
+  }
+ 
+  public static function cacheSelect(string $action, $arg) {
+    if (!is_callable("self::{$action}")) {
+      throw new CRM_Core_Exception(__METHOD__ . ": unrecognized action: " . var_export($action, 1));
+    }
+    $argCacheKey = self::createArgCacheKey($arg);
+    if (
+      !array_key_exists($action, self::$cache)
+      || !array_key_exists($argCacheKey, self::$cache[$action])
+    ) {
+      self::$cache[$action][$argCacheKey] = self::{$action}($arg);
+    }
+    return self::$cache[$action][$argCacheKey];
+  }  
 }
