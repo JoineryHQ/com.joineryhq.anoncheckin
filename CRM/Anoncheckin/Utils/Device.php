@@ -8,7 +8,7 @@ use CRM_Anoncheckin_ExtensionUtil as E;
 class CRM_Anoncheckin_Utils_Device {
   
   // Mimic values as defined in anoncheckin_device_status reserved optionGroup.
-  const DEVICE_STATUS_PENDING = 1; // FIXME: DEPRECATED
+  const DEVICE_STATUS_PENDING = 1;
   const DEVICE_STATUS_LOCKED = 2;
   const DEVICE_STATUS_INVALIDATED = 3;
   const DEVICE_STATUS_CLOSED = 4;

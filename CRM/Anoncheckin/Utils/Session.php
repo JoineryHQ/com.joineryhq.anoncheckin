@@ -1,5 +1,6 @@
 <?php
 
+// Fixme: needed under extern?
 /**
  * Session storage.
  */
