@@ -394,6 +394,9 @@
           {if $action == 'action_get_p'}
             <p>You've scanned the badge for</p>
           {/if}
+          {if $deviceIsLocked}
+            <p>This device belongs to</p>
+          {/if}
           <h2>
             {$participantName}
             {if $deviceIsLocked} <i id="anoncheckin-participantNameLock" class="fa fa-lock"></i> <a id="change-p-link" href="?a=change_p">Change</a>{/if}
