@@ -8,6 +8,17 @@ return [
     'type' => 'String',
     // No other metadata, as this should be omitted from settings forms.
   ],
+  'anoncheckin_debug' => [
+    'name' => 'anoncheckin_debug',
+    'type' => 'Boolean',
+    'title' => E::ts('Display debug messages on user-facing interface?'),
+    'description' => '',
+    'default' => FALSE,
+    'html_type' => 'Toggle',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'settings_pages' => ['anoncheckin' => ['weight' => 5]],
+  ],
   'anoncheckin_limit_checkin_by_time' => [
     'name' => 'anoncheckin_limit_checkin_by_time',
     'type' => 'Boolean',

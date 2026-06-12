@@ -356,12 +356,14 @@
     <h1>Session Attendance</h1>
 
     <!-- Intro -->
-    {* fixme: only show this if there's no participantName -- i.e., if they're
+    {* Only show this if there's no participantId -- i.e., if they're now
      * scanning a badge or have already locked to a badge, this is not needed *}
+    {if !$participantId}
     <div class="card center">
       <h2>Welcome</h2>
       <p>Record your sessions here.</p>
     </div>
+    {/if}
     {if !empty($messages)}
       {foreach from=$messages item=message}
         <div class="card center message message-type-{$message.type}">
@@ -373,10 +375,11 @@
     {if $isStaffInfo}
         <div class="card">
           <h2>Staff Info</h2>
-          <table>
-            {foreach from=$device key=deviceKey item=deviceValue}
-              <tr><td><strong>{$deviceKey}:</strong></td><td>{$deviceValue}</td></tr>
-            {/foreach}
+          <table style="margin-bottom: 1em;">
+            <tr><td><strong>Device Key:</strong></td><td>{$device.deviceKey}</td></tr>
+            <tr><td><strong>Participant ID:</strong></td><td>{$device.participantId}</td></tr>
+            <tr><td><strong>Description:</strong></td><td>{$device.userAgentShort}</td></tr>
+            <tr><td><strong>Device Status:</strong></td><td>{$device.deviceStatus}</td></tr>
           </table>
           <img src="{$deviceQrUrl}">
         </div>
@@ -386,8 +389,11 @@
         <a class="button secondary" href="{$appUrl}">Go Back</a>
       </div>
     {else}
-      {if $participantName}
+      {if $participantId}
         <div class="card center">
+          {if $action == 'action_get_p'}
+            <p>You've scanned the badge for</p>
+          {/if}
           <h2>
             {$participantName}
             {if $deviceIsLocked} <i id="anoncheckin-participantNameLock" class="fa fa-lock"></i> <a id="change-p-link" href="?a=change_p">Change</a>{/if}
@@ -411,7 +417,7 @@
       {if $action == 'action_get_p'}
         {* They've scanned a badge, so ask them if they're sure. *}
         <div class="card center">
-          <h2>Are you sure?</h2>
+          <h2>Is this you?</h2>
           <p>You are about to lock this device to the badge for <strong>{$participantName}</strong>.</p>
           <p>Once locked, you will need staff assistance to unlock.</p>
           <form method="post">

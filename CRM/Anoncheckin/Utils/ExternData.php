@@ -37,7 +37,7 @@ class CRM_Anoncheckin_Utils_ExternData {
 
   public static function selectParticipantInfo(int $pid): ?array {
     $sql = "
-      SELECT c.display_name, p.event_id, e.title as event_title
+      SELECT c.display_name, p.event_id, e.title as event_title, p.id as participant_id
       FROM civicrm_participant p
         INNER JOIN civicrm_contact c
           ON c.id = p.contact_id

@@ -17,7 +17,7 @@ class CRM_Anoncheckin_Extern_App {
     $this->validateInput();
 
     $this->appUrl = CRM_Anoncheckin_Utils_Extern::getAppUrl();
-    $this->debug = Civi::settings()->get('debug_enabled');
+    $this->debug = Civi::settings()->get('anoncheckin_debug');
     
     $deviceKey = CRM_Anoncheckin_Utils_Extern::getUserDeviceKey();
     if ($deviceKey) {
@@ -50,21 +50,7 @@ class CRM_Anoncheckin_Extern_App {
     
     $this->assign('appUrl', $this->appUrl);
 
-    if ($this->device['deviceStatusId'] == CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_INVALIDATED) {
-      $this->fatal('There is a problem verifying your identity. Please see a staff member for assistance.');
-    }
-    elseif ($this->device['deviceStatusId'] == CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_CLOSED) {
-      $this->device = [];
-    }
-
-    $this->assign('participantName', ($this->participant['displayName'] ?? NULL));
-    $deviceIsLocked = (bool)$this->getDeviceLockedPid();
-    $this->assign('deviceIsLocked', $deviceIsLocked);
-    $this->assign('isDebug', $this->debug);
-    $this->assign('participantSessions', $this->participantSessions);
-
-
-    // Run the appropriate action.
+    // Determine the appropriate action.
     if ($_REQUEST['a']) {
       $actionFunctionName = 'action_' . $_REQUEST['a'];
     }
@@ -79,6 +65,21 @@ class CRM_Anoncheckin_Extern_App {
         }
       }
     }
+
+    if (
+      $this->device['deviceStatusId'] == CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_INVALIDATED 
+      && $actionFunctionName != 'action_staff_info'
+    ) {
+      // If device is invalid (and we're not just viewing staff info), fatal with message.
+      $this->fatal('There is a problem verifying your identity. Please see a staff member for assistance.');
+    }
+
+    $this->assign('participantName', ($this->participant['displayName'] ?? NULL));
+    $this->assign('participantId', $this->participant['participantId']);
+    $deviceIsLocked = (bool)$this->getDeviceLockedPid();
+    $this->assign('deviceIsLocked', $deviceIsLocked);
+    $this->assign('isDebug', $this->debug);
+    $this->assign('participantSessions', $this->participantSessions);
 
     if (!empty($actionFunctionName) && is_callable([$this, $actionFunctionName])) {
       $this->$actionFunctionName($actionValue);
@@ -122,13 +123,16 @@ class CRM_Anoncheckin_Extern_App {
   }
   
   private function action_staff_info() {
-    // fixme: this does not display properly when deviceStatus is 'invalid'
     // For staff info, we should show the current device as a QR code and as a table.
-    $this->assign('device', $this->device);
-    $deviceQrUrl = CRM_Anoncheckin_Utils_Qr::getQrImageUrl('app://staff.info?'. http_build_query($this->device));
+    $deviceInfo = $this->device;
+    // Add deviceStatus label to $deviceInfo.
+    $optionValues = CRM_Core_OptionGroup::values('anoncheckin_device_status');
+    $deviceInfo['deviceStatus'] = $optionValues[$deviceInfo['deviceStatusId']];
+    $this->assign('device', $deviceInfo);
+    
+    $deviceQrUrl = CRM_Anoncheckin_Utils_Qr::getQrImageUrl($this->device['deviceKey']);
     $this->assign('deviceQrUrl', $deviceQrUrl);
     $this->assign('isStaffInfo', TRUE);
-    
   }
   
 
@@ -159,11 +163,12 @@ class CRM_Anoncheckin_Extern_App {
       // But is this badge locked to someone other device?
       $deviceLockedToPid = CRM_Anoncheckin_Utils_ExternData::cacheSelect('selectLockedDeviceByPid', $p);
       if (!empty($deviceLockedToPid)) {
-        $this->fatal("The badge for \"<strong>{$badgeParticipant['displayName']}</strong>\" has been locked by another device ({$deviceLockedToPid['userAgentShort']}). To record sessions on <em>this</em> device, please see a staff member for assistance.");
+        $this->fatal("The badge for <strong>{$badgeParticipant['displayName']}</strong> has been locked by another device ({$deviceLockedToPid['userAgentShort']}).<br/>To record sessions for {$badgeParticipant['displayName']} on <em>this</em> device, please see a staff member for assistance.");
       }
       // If we're still here, user has an unlocked device, and their badge is also not locked elsewhere.
       $this->assign('participantEventTitle', $badgeParticipant['eventTitle']);
       $this->assign('participantName', $badgeParticipant['displayName']);
+      $this->assign('participantId', $p);
       $this->setDebugMessage(__FUNCTION__ . ': assign participantName = '. $badgeParticipant['displayName']);
     }
   }
@@ -183,7 +188,7 @@ class CRM_Anoncheckin_Extern_App {
     // Lock device to badge.
     if ($this->device = CRM_Anoncheckin_Utils_Device::lockDeviceToParticipant($this->device, $p)) {
       $this->participant = CRM_Anoncheckin_Utils_ExternData::cacheSelect('selectParticipantInfo', $p);
-      $this->setUserMessage("Your device has now been locked to the badge named: {$this->participant['displayName']}", 'success');
+      $this->setUserMessage("Your device has now been locked to the badge for <strong>{$this->participant['displayName']}<strong>", 'success');
     }
     else {
       $this->fatal('There was a problem locking your device to this badge. Please try again.');
