@@ -75,12 +75,13 @@ class CRM_Anoncheckin_Extern_App {
     }
 
     $this->assign('participantName', ($this->participant['displayName'] ?? NULL));
-    $this->assign('participantId', $this->participant['participantId']);
+    $this->assign('participantId', ($this->participant['participantId'] ?? NULL));
     $deviceIsLocked = (bool)$this->getDeviceLockedPid();
     $this->assign('deviceIsLocked', $deviceIsLocked);
     $this->assign('isDebug', $this->debug);
     $this->assign('participantSessions', $this->participantSessions);
 
+    // Perform called-for action, if it exists.
     if (!empty($actionFunctionName) && is_callable([$this, $actionFunctionName])) {
       $this->$actionFunctionName($actionValue);
       // If method was POST, redirect to clean app.
@@ -128,6 +129,7 @@ class CRM_Anoncheckin_Extern_App {
     // Add deviceStatus label to $deviceInfo.
     $optionValues = CRM_Core_OptionGroup::values('anoncheckin_device_status');
     $deviceInfo['deviceStatus'] = $optionValues[$deviceInfo['deviceStatusId']];
+    $deviceInfo['participantName'] = $this->participant['displayName'];
     $this->assign('device', $deviceInfo);
     
     $deviceQrUrl = CRM_Anoncheckin_Utils_Qr::getQrImageUrl($this->device['deviceKey']);
@@ -157,10 +159,13 @@ class CRM_Anoncheckin_Extern_App {
       }
     }
     else {
+      // This device is not locked.
       // We'll need the badge participant info soon.
       $badgeParticipant = CRM_Anoncheckin_Utils_ExternData::cacheSelect('selectParticipantInfo', $p);
-      // This device is not locked.
-      // But is this badge locked to someone other device?
+      if ($badgeParticipant === NULL) {
+        $this->fatal('This badge does not appear to be valid.');
+      }
+      // Is this badge locked to someone other device?
       $deviceLockedToPid = CRM_Anoncheckin_Utils_ExternData::cacheSelect('selectLockedDeviceByPid', $p);
       if (!empty($deviceLockedToPid)) {
         $this->fatal("The badge for <strong>{$badgeParticipant['displayName']}</strong> has been locked by another device ({$deviceLockedToPid['userAgentShort']}).<br/>To record sessions for {$badgeParticipant['displayName']} on <em>this</em> device, please see a staff member for assistance.");
