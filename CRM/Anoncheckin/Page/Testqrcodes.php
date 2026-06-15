@@ -94,6 +94,17 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
       ];
     }
     
+    // One non-existent participant
+    $pid = -1;
+    $displayName = 'Non-existent participant';
+    $eventTitle = 'N/A';
+    $indivAppUrl = $this->getAppUrl(['p' => $pid, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)]);
+    $indivUrls[] = [
+      'title' => "$displayName at \"{$eventTitle}\" ($pid)",
+      'app' => $indivAppUrl,
+      'qr'  => CRM_Anoncheckin_Utils_Qr::getQrImageUrl($indivAppUrl, '000000')
+    ];
+
     $this->assign('indivUrls', $indivUrls);
 
     $sessionUrls = [];
