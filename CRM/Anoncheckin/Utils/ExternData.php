@@ -35,6 +35,12 @@ class CRM_Anoncheckin_Utils_ExternData {
     return $ret;
   }
 
+  /**
+   * Get relevant info for a given participant ID
+   * 
+   * @param int $pid Participant ID
+   * @return array|null If participant exists, an array of attributes; otherwise NULL
+   */
   public static function selectParticipantInfo(int $pid): ?array {
     $sql = "
       SELECT c.display_name, p.event_id, e.title as event_title, p.id as participant_id
