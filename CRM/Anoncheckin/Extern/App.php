@@ -5,16 +5,27 @@
  */
 class CRM_Anoncheckin_Extern_App {
 
+  const SESSION_PREFIX = 'anoncheckin_extern';
+
   var $device = [];
   var $participant = [];
   var $participantSessions = [];
   var $debugMessages = [];
   var $debug = FALSE;
   var $appUrl = '';
+  
+  /**
+   * @var CRM_Core_session Instance of CRM_Core_Session, to be scoped for our own dedicated usage.
+   */
+  var $_session;
 
   public function __construct() {
     // validate all input (value vs hmac sig).
     $this->validateInput();
+
+    // Create context for app session vars.
+    $this->_session = CRM_Core_Session::singleton();
+    $this->_session->createScope(self::SESSION_PREFIX);
 
     $this->appUrl = CRM_Anoncheckin_Utils_Extern::getAppUrl();
     $setting = CRM_Anoncheckin_Setting::singleton();
@@ -194,7 +205,7 @@ class CRM_Anoncheckin_Extern_App {
     // Lock device to badge.
     if ($this->device = CRM_Anoncheckin_Utils_Device::lockDeviceToParticipant($this->device, $p)) {
       $this->participant = CRM_Anoncheckin_Utils_ExternData::cacheSelect('selectParticipantInfo', $p);
-      $this->setUserMessage("Your device has now been locked to the badge for <strong>{$this->participant['displayName']}<strong>", 'success');
+      $this->setMessage("Your device has now been locked to the badge for <strong>{$this->participant['displayName']}<strong>", 'success');
     }
     else {
       $this->fatal('There was a problem locking your device to this badge. Please try again.');
@@ -209,19 +220,19 @@ class CRM_Anoncheckin_Extern_App {
   private function action_get_s($s) {
     // device is locked to a badge? if not, they gotta do that first: message and redirectClean.
     if (empty($this->getDeviceLockedPid())) {
-      $this->setUserMessage('Please scan your badge first to establish your identity.', 'info');
+      $this->setMessage('Please scan your badge first to establish your identity.', 'info');
       $this->redirectClean();      
     }
     // session exists in the same event as participant? If not, tell them that session's not available: message and redirectClean.
     $session = CRM_Anoncheckin_Utils_ExternData::cacheSelect('selectSessionInfo', $s);
     if ($session['eventId'] != $this->participant['eventId']) {
-      $this->setUserMessage("The session you have selected (<strong>{$session['title']}</strong>) is not available for attendance recording.", 'error');
+      $this->setMessage("The session you have selected (<strong>{$session['title']}</strong>) is not available for attendance recording.", 'error');
       $this->redirectClean();
     }
     
     // session start/end times are within allowed window? If not, tell them that session's not available: message and redirectClean.
     if (!CRM_Anoncheckin_Utils_Extern::sessionTimeIsValidNow($session)) {
-      $this->setUserMessage("The session you have selected (<strong>{$session['title']}</strong>) is not available for attendance recording.", 'error');
+      $this->setMessage("The session you have selected (<strong>{$session['title']}</strong>) is not available for attendance recording.", 'error');
       $this->redirectClean();      
     }
     
@@ -233,7 +244,7 @@ class CRM_Anoncheckin_Extern_App {
         break;
       case -1:
         // Already recorded this session. We won't do anything here.
-        $this->setUserMessage("You've already recorded this session (<strong>{$session['title']}</strong>).", 'success');
+        $this->setMessage("You've already recorded this session (<strong>{$session['title']}</strong>).", 'success');
         $this->redirectClean();      
         break;
       default:
@@ -261,7 +272,7 @@ class CRM_Anoncheckin_Extern_App {
   private function action_post_s($s) {
     // device is locked to a badge? if not, they gotta do that first: message and redirectClean.
     if (empty($this->getDeviceLockedPid())) {
-      $this->setUserMessage('Please scan your badge first to establish your identity.', 'info');
+      $this->setMessage('Please scan your badge first to establish your identity.', 'info');
       $this->redirectClean();      
     }
     
@@ -276,7 +287,7 @@ class CRM_Anoncheckin_Extern_App {
         break;
       case -1:
         // Session already recorded. Just tell them it's recorded, and redirect to clean app.
-        $this->setUserMessage("You've been marked as attending session \"<strong>{$session['title']}</strong>\".", 'success');
+        $this->setMessage("You've been marked as attending session \"<strong>{$session['title']}</strong>\".", 'success');
         $this->redirectClean();
         break;
       default:
@@ -292,7 +303,7 @@ class CRM_Anoncheckin_Extern_App {
     
     if ($doRecordSession) {
       CRM_Anoncheckin_Utils_ExternData::insertSessionOnDevice($s, $this->device);
-      $this->setUserMessage("You've been marked as attending session \"<strong>{$session['title']}</strong>\".", 'success');
+      $this->setMessage("You've been marked as attending session \"<strong>{$session['title']}</strong>\".", 'success');
     }
   }
   
@@ -306,7 +317,7 @@ class CRM_Anoncheckin_Extern_App {
   }
   private function fatal($message) {
     $this->assign('isFatal', TRUE);
-    $this->setUserMessage($message, 'error');
+    $this->setMessage($message, 'error');
     if (!empty($this->device['deviceId'])) {
       // In odd circumstances, there may be no device, so only log if we have one.
       CRM_Anoncheckin_Utils_ExternData::insertDeviceLog($this->device['deviceId'], CRM_Anoncheckin_Utils_Extern::DEVICE_LOG_TYPE_USER, $message);
@@ -351,7 +362,7 @@ class CRM_Anoncheckin_Extern_App {
 
   private function print() {
     $tpl = CRM_Core_Smarty::singleton();
-    $tpl->assign('messages', CRM_Anoncheckin_Utils_Session::singleton()->consumeMessages());
+    $tpl->assign('messages', $this->consumeMessages());
     if ($this->debug) {
       $tpl->assign('debugMessages', $this->debugMessages);
     }
@@ -382,10 +393,6 @@ class CRM_Anoncheckin_Extern_App {
     $this->debugMessages[] = $message;
   }
 
-  private function setUserMessage($message, $type) {
-    CRM_Anoncheckin_Utils_Session::singleton()->setMessage($message, $type);
-  }
-
   private function getDeviceLockedPid() {
     $ret = NULL;
     if ($this->device['deviceStatusId'] == CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_LOCKED) {
@@ -398,4 +405,25 @@ class CRM_Anoncheckin_Extern_App {
     header('Location: '. $this->appUrl);
     exit();
   }
+  
+  /**
+   * Add a user-facing status message for display.
+   * @param String $message The message body.
+   * @param String $type One of: info, error, success
+   */
+  public function setMessage($message, $type = 'info') {
+    $messages = $this->_session->get('messages', self::SESSION_PREFIX) ?? [];
+    $messages[] = [
+      'type' => $type,
+      'message' => $message,
+    ];
+    $this->_session->set('messages', $messages, self::SESSION_PREFIX);
+  }
+
+  public function consumeMessages() {
+    $messages = $this->_session->get('messages', self::SESSION_PREFIX) ?? [];
+    $this->_session->set('messages', [], self::SESSION_PREFIX);
+    return $messages;
+  }
+  
 }
