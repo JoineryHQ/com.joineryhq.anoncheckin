@@ -141,6 +141,8 @@
       }
       
       $(document).ready(function () {
+        $('#anoncheckin-scan-badge').click(anoncheckinQrScanner.openScanner);
+        $('#anoncheckin-scan-session').click(anoncheckinQrScanner.openScanner);
       });
 
       
