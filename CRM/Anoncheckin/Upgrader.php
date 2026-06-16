@@ -24,10 +24,8 @@ final class CRM_Anoncheckin_Upgrader extends \CRM_Extension_Upgrader_Base {
    * On install.
    */
   public function postInstall(): void {
-    // Ensure hmac secret exist
-    CRM_Anoncheckin_Utils_Config::createHmacSecretIfEmpty();
     // Ensure extern config file has latest values.
-    CRM_Anoncheckin_Utils_Config::writeConfigFile(TRUE);
+    CRM_Anoncheckin_Utils_Config::refreshConfigFile(TRUE);
   }
 
   /**
@@ -43,10 +41,8 @@ final class CRM_Anoncheckin_Upgrader extends \CRM_Extension_Upgrader_Base {
    * On enable.
    */
   public function enable(): void {
-    // Ensure hmac secret exist
-    CRM_Anoncheckin_Utils_Config::createHmacSecretIfEmpty();
     // Ensure extern config file has latest values.
-    CRM_Anoncheckin_Utils_Config::writeConfigFile(TRUE);
+    CRM_Anoncheckin_Utils_Config::refreshConfigFile(TRUE);
   }
 
   /**

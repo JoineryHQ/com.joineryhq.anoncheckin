@@ -356,6 +356,9 @@ class CRM_Anoncheckin_Extern_App {
       $tpl->assign('debugMessages', $this->debugMessages);
     }
     
+    $setting = CRM_Anoncheckin_Setting::singleton();
+    $tpl->assign('extensionBasePath', $setting->get('extensionBasePath'));
+
     $cssFileUrls = [
       CRM_Anoncheckin_Setting::singleton()->get('extensionBaseUrl') . '/css/qrScanner.css',
     ];

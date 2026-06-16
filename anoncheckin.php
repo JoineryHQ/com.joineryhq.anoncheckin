@@ -20,7 +20,7 @@ function anoncheckin_civicrm_postProcess($formName, &$form) {
       // Rebuild cached config.
       // TODO: This doesn't address settings changes via api or other mechanisms
       // and as of this writing, we have no mechanism to do so.
-      CRM_Anoncheckin_Utils_Config::writeConfigFile(TRUE);
+      CRM_Anoncheckin_Utils_Config::refreshConfigFile(TRUE);
     }
   }
 }
@@ -34,10 +34,8 @@ function anoncheckin_civicrm_postProcess($formName, &$form) {
 function anoncheckin_civicrm_check(&$messages, $statusNames = [], $includeDisabled = FALSE) {
   // We're cheating a little, in that we'll never send a "system check" message about this.
 
-  // Ensure hmac secret exist
-  CRM_Anoncheckin_Utils_Config::createHmacSecretIfEmpty();
   // Ensure extern config file has latest values.
-  CRM_Anoncheckin_Utils_Config::writeConfigFile();
+  CRM_Anoncheckin_Utils_Config::refreshConfigFile();
 }
 
 /**

@@ -41,7 +41,7 @@
   left: 25%;
 }
 
-svg#loading-indicator {
+svg#anoncheckin-loading-indicator {
   position: absolute;
   height: auto;
   width: 25%;
@@ -50,19 +50,19 @@ svg#loading-indicator {
   display: none;
 }
 
-.dot {
+.anoncheckin-loading-dot {
   fill: #FFF;
   stroke: #FFF;
   /*stroke-width: 15;*/
   animation: bounce 2s infinite;
 }
-.dot:nth-child(1) {
+.anoncheckin-loading-dot:nth-child(1) {
   animation-delay: -0.6s;
 }
-.dot:nth-child(2) {
+.anoncheckin-loading-dot:nth-child(2) {
   animation-delay: -0.4s;
 }
-.dot:nth-child(3) {
+.anoncheckin-loading-dot:nth-child(3) {
   animation-delay: -0.2s;
 }
 @keyframes bounce {

@@ -5,7 +5,7 @@ class CRM_Anoncheckin_Setting {
   var $config = [];
   var $cachedOnly;
   
-  private function __construct(array $config = NULL, bool $cachedOnly = FALSE) {
+  private function __construct(array $config = NULL) {
     if (is_array($config)) {
       $this->config = $config;
     }
@@ -17,10 +17,10 @@ class CRM_Anoncheckin_Setting {
    * @param Array $config A set of config values
    * @return object
    */
-  public static function singleton(array $config = NULL, bool $cachedOnly = FALSE) {
+  public static function singleton(array $config = NULL) {
     static $singleton;
     if (!isset($singleton)) {
-      $singleton = new CRM_Anoncheckin_Setting($config, $cachedOnly);
+      $singleton = new CRM_Anoncheckin_Setting($config);
     }
     return $singleton;
   }

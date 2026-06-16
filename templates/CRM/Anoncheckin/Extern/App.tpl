@@ -157,7 +157,7 @@
             isVideoCanceled = false;
             $('#anoncheckin-scanner').hide();
             $('#anoncheckin-overlay').hide();
-            $('svg#loading-indicator').hide();
+            $('svg#anoncheckin-loading-indicator').hide();
             $('div#anoncheckin-scan-status-container').hide();
           }
 
@@ -193,7 +193,7 @@
 
           async function openScanner(e) {
             e.preventDefault();
-            $('svg#loading-indicator').show();
+            $('svg#anoncheckin-loading-indicator').show();
             isVideoCanceled = false;
 
             var scanType = $(e.currentTarget).data('scanType');
@@ -245,7 +245,7 @@
               }
               scan();
               $('#anoncheckin-video-cancel').show();
-              $('svg#loading-indicator').hide();
+              $('svg#anoncheckin-loading-indicator').hide();
             } catch (err) {
               $('#anoncheckin-scanner').hide();
               showMessage(err.message + '\n(Try using your camera app instead.)', 'error');
@@ -458,27 +458,7 @@
         | <a target="_blank" href="/civicrm/?page=CiviCRM&q=civicrm%2Fanoncheckin%2Ftestqrcodes">QR Codes</a>
       {/if}
     </div>
-    <div id="anoncheckin-scanner">
-      <button id="anoncheckin-video-cancel">
-        <svg id="site-nav-close" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
-        <line x1="5" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line>
-        <line x1="19" y1="5" x2="5" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line>
-        </svg>
-      </button>
-      <svg id="loading-indicator" viewBox="0 0 130 200" width="120" height="120" xmlns="http://www.w3.org/2000/svg">
-      <circle class="dot" cx="15"  cy="65" r="15"/>
-      <circle class="dot" cx="65" cy="65" r="15"/>
-      <circle class="dot" cx="115" cy="65" r="15"/>
-      </svg>
-
-      <video id="anoncheckin-video" autoplay=""></video>
-    </div>
-    <div id="anoncheckin-scan-status-container">
-      <p id="anoncheckin-scan-status"></p>
-      <a id="anoncheckin-scan-status-close" href="#">Close</a>
-    </div>
-    <div id="anoncheckin-overlay"></div>
-
+    {include file="{$extensionBasePath}/templates/CRM/Anoncheckin/common/qrScanner.tpl"}
   </body>
 </html>
 
