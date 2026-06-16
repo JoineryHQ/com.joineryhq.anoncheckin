@@ -17,11 +17,12 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff_DeviceLocked extends CRM_Core_Form {
 
     // add form elements
     $this->add(
-      'select', // field type
-      'favorite_color', // field name
-      'Favorite Color', // field label
-      $this->getColorOptions(), // list of options
-      TRUE // is required
+      'hidden', // field type
+      'deviceKey', // field name
+    );
+    $this->add(
+      'hidden', // field type
+      'badgeParticipantId', // field name
     );
     $this->addButtons([
       [
@@ -31,6 +32,7 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff_DeviceLocked extends CRM_Core_Form {
       ],
     ]);
 
+    CRM_Core_Resources::singleton()->addStyleFile(E::LONG_NAME, '/css/qrScanner.css');
     // export form elements
     $this->assign('elementNames', $this->getRenderableElementNames());
     parent::buildQuickForm();

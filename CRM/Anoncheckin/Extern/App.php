@@ -368,12 +368,32 @@ class CRM_Anoncheckin_Extern_App {
     }
     
     $setting = CRM_Anoncheckin_Setting::singleton();
-    $tpl->assign('extensionBasePath', $setting->get('extensionBasePath'));
+    $extensionBasePath = $setting->get('extensionBasePath');
+    $tpl->assign('extensionBasePath', $extensionBasePath);
 
-    $cssFileUrls = [
-      CRM_Anoncheckin_Setting::singleton()->get('extensionBaseUrl') . '/css/qrScanner.css',
+    // Embed CSS styles. We will embed CSS as literal code, rather than using 
+    // separate CSS URLs, in order to minimize the number of http requests on
+    // the page.
+    $cssFilePaths = [
+      $extensionBasePath . '/css/qrScanner.css',
     ];
-    $tpl->assign('cssFileUrls', $cssFileUrls);
+    $cssContent = '';
+    foreach ($cssFilePaths as $cssFilePath) {
+      $cssContent .= '<style>' . file_get_contents($cssFilePath). '</style>';
+    }
+    $tpl->assign('cssContent', $cssContent);
+
+    // Embed Javascript. We will embed JS as literal code, rather than using 
+    // separate Script URLs, in order to minimize the number of http requests on
+    // the page.
+    $jsFilePaths = [
+      $extensionBasePath . '/js/qrScanner.js',
+    ];
+    $jsContent = '';
+    foreach ($jsFilePaths as $jsFilePath) {
+      $jsContent .= '<script>' . file_get_contents($jsFilePath). '</script>';
+    }
+    $tpl->assign('jsContent', $jsContent);
 
     $tpl->display($this->getTemplate());
     exit();

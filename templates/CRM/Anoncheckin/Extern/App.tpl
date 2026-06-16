@@ -7,9 +7,8 @@
     <!-- fixme: this path should be dynamically generated in App::__construct() -->
     <link rel="stylesheet" id="ls-global-css" href="/wp-content/plugins/civicrm/civicrm/css/crm-i.css" media="all">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css"/>
-    {foreach $cssFileUrls item=cssFileUrl}
-      <link rel="stylesheet" href="{$cssFileUrl}"/>
-    {/foreach}
+    {$cssContent}
+    {$jsContent}
     <style>
       body {
         font-family: sans-serif;
@@ -118,147 +117,33 @@
       }
     </style>
     <script>
-      {literal}
-        $(document).ready(function () {
+      var anoncheckin_urlIsValid = function anoncheckin_urlIsValid(url, e) {
+        var paramName = $(e.currentTarget).data('scanType');
 
-          var isVideoCanceled = false;
+        const currentPageUrl = new URL(window.location.href);
+        const testedUrl = new URL(url);
 
-          $('#anoncheckin-video-cancel').click(function (e) {
-            console.log('click action on cancel button.')
-            e.preventDefault();
-            isVideoCanceled = true;
-          });
+        // (a) compare origin + pathname (ignore query + hash)
+        const samePage =
+                currentPageUrl.origin === testedUrl.origin &&
+                currentPageUrl.pathname === testedUrl.pathname;
 
-          const video = document.getElementById('anoncheckin-video');
+        // (b) check for param
+        const hasParam = testedUrl.searchParams.has(paramName);
+        if (samePage && hasParam) {
+          return true;
+        } else {
+          console.log('invalid url: ' + testedUrl);
+          console.log('samePage: ' + samePage);
+          console.log('hasParam: ' + hasParam, paramName);
+          return false;
+        }
+      }
+      
+      $(document).ready(function () {
+      });
 
-          function urlIsValid(url, paramName) {
-            const currentPageUrl = new URL(window.location.href);
-            const testedUrl = new URL(url);
-
-            // (a) compare origin + pathname (ignore query + hash)
-            const samePage =
-                    currentPageUrl.origin === testedUrl.origin &&
-                    currentPageUrl.pathname === testedUrl.pathname;
-
-            // (b) check for param
-            const hasParam = testedUrl.searchParams.has(paramName);
-            if (samePage && hasParam) {
-              return true;
-            }
-            else {
-              console.log('invalid url: ' + testedUrl);
-              console.log('samePage: ' + samePage);
-              console.log('hasParam: ' + hasParam, paramName);
-              return false;
-            }
-          }
-
-          function hideScanner() {
-            isVideoCanceled = false;
-            $('#anoncheckin-scanner').hide();
-            $('#anoncheckin-overlay').hide();
-            $('svg#anoncheckin-loading-indicator').hide();
-            $('div#anoncheckin-scan-status-container').hide();
-          }
-
-          async function getCameraStream(constraints) {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-              throw new Error('Camera API not supported');
-            }
-
-            try {
-              return await navigator.mediaDevices.getUserMedia(constraints);
-            } catch (err) {
-              // Normalize common cases
-              if (err.name === 'NotAllowedError') {
-                throw new Error('Camera permission denied');
-              }
-              if (err.name === 'NotFoundError') {
-                throw new Error('No camera found');
-              }
-              if (err.name === 'NotReadableError') {
-                throw new Error('Camera already in use');
-              }
-              throw new Error('Unable to access camera');
-            }
-          }
-
-          function showMessage(text, type) {
-            const el = document.getElementById('anoncheckin-scan-status');
-            console.log('showMessage el', el, text, type);
-            el.textContent = text;
-            el.className = 'message-type-' + type;
-            $('div#anoncheckin-scan-status-container').show();
-          }
-
-          async function openScanner(e) {
-            e.preventDefault();
-            $('svg#anoncheckin-loading-indicator').show();
-            isVideoCanceled = false;
-
-            var scanType = $(e.currentTarget).data('scanType');
-
-            $('#anoncheckin-overlay').show();
-            $('#anoncheckin-scanner').show();
-
-            try {
-              const stream = await getCameraStream({
-                video: {facingMode: "environment"}
-              });
-
-              video.srcObject = stream;
-              const canvas = document.createElement('canvas');
-              const ctx = canvas.getContext('2d');
-
-              function scan() {
-                console.log('scan isVideoCanceled', isVideoCanceled);
-                if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                  canvas.width = video.videoWidth;
-                  canvas.height = video.videoHeight;
-                  ctx.drawImage(video, 0, 0);
-
-                  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                  const code = jsQR(imageData.data, canvas.width, canvas.height);
-
-                  if (code && code.data && urlIsValid(code.data, scanType)) {
-                    // show success message
-
-                    stopVideo();
-
-                    // code value is now in code.data. Parse that and redirect to next step,
-                    window.location.href = code.data;
-                    return;
-                  }
-                  if (isVideoCanceled) {
-                    stopVideo();
-                    return;
-                  }
-                }
-                requestAnimationFrame(scan);
-              }
-
-              function stopVideo() {
-                // stop the camera now that we have our code.
-                stream.getTracks().forEach(t => t.stop());
-                console.log('stopped video');
-                hideScanner();
-              }
-              scan();
-              $('#anoncheckin-video-cancel').show();
-              $('svg#anoncheckin-loading-indicator').hide();
-            } catch (err) {
-              $('#anoncheckin-scanner').hide();
-              showMessage(err.message + '\n(Try using your camera app instead.)', 'error');
-            }
-          }
-
-
-          $('#anoncheckin-scan-badge').click(openScanner);
-          $('#anoncheckin-scan-session').click(openScanner);
-          $('#anoncheckin-scan-status-close').click(hideScanner);
-
-        });
-      {/literal}
+      
     </script>
   </head>
   <body>
@@ -323,7 +208,7 @@
           <p></p>
           {assign var="buttonClass" value="success"}
           {assign var="buttonLabel" value="Scan my badge"}
-          <button id="anoncheckin-scan-badge" data-scan-type="p" class="button {$buttonClass}">{$buttonLabel}</button>
+          <button id="anoncheckin-scan-badge" data-scan-validate-callback="anoncheckin_urlIsValid" data-scan-type="p" class="button {$buttonClass}">{$buttonLabel}</button>
         </div>
       {/if}
 
@@ -338,7 +223,7 @@
             <input type="hidden" name="ph" value="{$ph}">
             <!-- Confirm -->
             <input type="submit" class="button success" value="Yes, lock my device to this badge.">
-            <button id="anoncheckin-scan-badge" data-scan-type="p" class="button secondary">No, that's not me. Scan another badge.</button>
+            <button id="anoncheckin-scan-badge" data-scan-validate-callback="anoncheckin_urlIsValid" data-scan-type="p" class="button secondary">No, that's not me. Scan another badge.</button>
           </form>
         </div>
       {/if}
