@@ -15,7 +15,6 @@ class CRM_Anoncheckin_Utils_Extern {
   const DEVICE_LOG_TYPE_ADMIN = 2;
 
   public static function getAppUrl() {
-    
     return E::url('extern/app.php');
   }
 
@@ -59,13 +58,14 @@ class CRM_Anoncheckin_Utils_Extern {
    */
   public static function sessionTimeIsValidNow($session) {
 
-    $limitByTime = (Civi::settings()->get('anoncheckin_limit_checkin_by_time') ?? FALSE);
+    $setting = CRM_Anoncheckin_Setting::singleton();
+    $limitByTime = ($setting->get('anoncheckin_limit_checkin_by_time') ?? FALSE);
     if (!$limitByTime) {
       // Time checking is disabled, so just allow this.
       return TRUE;            
     }
 
-    $allowanceMinutes = (Civi::settings()->get('anoncheckin_limit_checkin_minutes') ?? 0);
+    $allowanceMinutes = ($setting->get('anoncheckin_limit_checkin_minutes') ?? 0);
     $allowanceSeconds = ((int)$allowanceMinutes * 60);
 
     $windowStart = strtotime($session['startDatetimeUtc'] . ' UTC') - $allowanceSeconds;

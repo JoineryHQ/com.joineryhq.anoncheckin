@@ -13,6 +13,24 @@ use CRM_Anoncheckin_ExtensionUtil as E;
  * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_check/
  *
  */
+function anoncheckin_civicrm_postProcess($formName, &$form) {
+  if ($formName == 'CRM_Admin_Form_Generic') {
+    if ($form->getSettingPageFilter() == 'anoncheckin') {
+      // This fires after the form has saved changes to settings. 
+      // Rebuild cached config.
+      // TODO: This doesn't address settings changes via api or other mechanisms
+      // and as of this writing, we have no mechanism to do so.
+      CRM_Anoncheckin_Utils_Config::writeConfigFile(TRUE);
+    }
+  }
+}
+
+/**
+ * Implements hook_civicrm_check().
+ *
+ * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_check/
+ *
+ */
 function anoncheckin_civicrm_check(&$messages, $statusNames = [], $includeDisabled = FALSE) {
   // We're cheating a little, in that we'll never send a "system check" message about this.
 

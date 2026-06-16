@@ -17,7 +17,8 @@ class CRM_Anoncheckin_Extern_App {
     $this->validateInput();
 
     $this->appUrl = CRM_Anoncheckin_Utils_Extern::getAppUrl();
-    $this->debug = Civi::settings()->get('anoncheckin_debug');
+    $setting = CRM_Anoncheckin_Setting::singleton();
+    $this->debug = $setting->get('anoncheckin_debug');
     
     $deviceKey = CRM_Anoncheckin_Utils_Extern::getUserDeviceKey();
     if ($deviceKey) {
@@ -350,13 +351,16 @@ class CRM_Anoncheckin_Extern_App {
 
   private function print() {
     $tpl = CRM_Core_Smarty::singleton();
-    $messages = CRM_Anoncheckin_Utils_Session::singleton()->consumeMessages();
-    $config = CRM_Core_Config::singleton();
-    $tpl->assign('userFrameworkResourceURL', $config->userFrameworkResourceURL);
-    $tpl->assign('messages', $messages);
+    $tpl->assign('messages', CRM_Anoncheckin_Utils_Session::singleton()->consumeMessages());
     if ($this->debug) {
       $tpl->assign('debugMessages', $this->debugMessages);
     }
+    
+    $cssFileUrls = [
+      CRM_Anoncheckin_Setting::singleton()->get('extensionBaseUrl') . '/css/qrScanner.css',
+    ];
+    $tpl->assign('cssFileUrls', $cssFileUrls);
+
     $tpl->display($this->getTemplate());
     exit();
   }

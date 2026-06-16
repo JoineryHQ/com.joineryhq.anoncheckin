@@ -17,7 +17,7 @@ class CRM_Anoncheckin_Utils_Config {
   }
 
   /**
-   * Write the config file (conditionally, if $force == false)
+   * Write the config file (conditionally, if $force == false; else unconditionally)
    * @param Bool $force Should we re-create the file if it already exists?
    * @throws CRM_Core_Exception
    */
@@ -28,10 +28,20 @@ class CRM_Anoncheckin_Utils_Config {
       // File exists, and we're not forcing update, so just return.
       return;
     }
+    // Start with some useful civicrm settings, paths, etc.
     $config = [
       'civicrmSettingsPath' => CIVICRM_SETTINGS_PATH,
-      'hmacSecret' => Civi::settings()->get('anoncheckin_hmac_secret'),
+      'extensionBaseUrl' => E::url(),
+      'userFrameworkResourceURL' => Civi::settings()->get('userFrameworkResourceURL'),
     ];
+    
+    // Add all of our own settings values.
+    $extensionSettings = require E::path('settings/Anoncheckin.setting.php');
+    $extensionSettingsKeys = array_keys($extensionSettings);
+    foreach ($extensionSettingsKeys as $extensionSettingsKey) {
+      $config[$extensionSettingsKey] = Civi::settings()->get($extensionSettingsKey);
+    }
+    
     $json = json_encode($config);
     try {
       $tmpNam = tempnam($dir, 'config_temp_');

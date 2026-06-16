@@ -4,9 +4,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+    <!-- fixme: this path should be dynamically generated in App::__construct() -->
     <link rel="stylesheet" id="ls-global-css" href="/wp-content/plugins/civicrm/civicrm/css/crm-i.css" media="all">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css"/>
-
+    {foreach $cssFileUrls item=cssFileUrl}
+      <link rel="stylesheet" href="{$cssFileUrl}"/>
+    {/foreach}
     <style>
       body {
         font-family: sans-serif;
@@ -91,48 +94,6 @@
         color: #664d03;
       }
 
-      #anoncheckin-overlay {
-        display: none;
-        position: fixed;
-        height: 100%;
-        width: 100%;
-        opacity: .85;
-        background: black;
-        top: 0;
-        left: 0;
-        z-index: 1000;
-      }
-
-      #anoncheckin-scanner {
-        position: fixed;
-        width: 100%;
-        top: 10%;
-        left: 0;
-        z-index: 2000;
-        display: none;
-      }
-      #anoncheckin-video-cancel {
-        position: absolute;
-        height: 3rem;
-        width: 3rem;
-        padding: 0;
-        z-index: 3000;
-        margin: 0;
-        left: calc(75% - 1.5rem);
-        top: -1.5rem;
-        border-radius: 99999px;
-        border: 1px solid gray;
-        display: none;
-      }
-      #anoncheckin-video {
-        position: relative;
-        height: auto;
-        width: 50%;
-        border-radius: 1em;
-        z-index: 2000;
-        left: 25%;
-      }
-
       #admin-footer {
         text-align: center;
         position: fixed;
@@ -148,58 +109,6 @@
         color: gray;
       }
 
-      svg#loading-indicator {
-        position: absolute;
-        height: auto;
-        width: 25%;
-        z-index: 2500;
-        left: 37.5%;
-        display: none;
-      }
-
-      .dot {
-        fill: #FFF;
-        stroke: #FFF;
-        /*stroke-width: 15;*/
-        animation: bounce 2s infinite;
-      }
-      .dot:nth-child(1) {
-        animation-delay: -0.6s;
-      }
-      .dot:nth-child(2) {
-        animation-delay: -0.4s;
-      }
-      .dot:nth-child(3) {
-        animation-delay: -0.2s;
-      }
-      @keyframes bounce {
-        0%, 100% {
-          transform: translateY(0);
-        }
-        50%      {
-          transform: translateY(70px);
-        }
-      }
-
-      #anoncheckin-scan-status-container {
-        color: white;
-        margin: 0;
-        width: 100%;
-        text-align: center;
-        background: black;
-        padding: 2rem 0rem;
-        display: none;
-        z-index: 4000;
-        position: fixed;
-        left: 0;
-        top: 10rem;
-      }
-      #anoncheckin-scan-status-container p {
-        padding: 0 2rem;
-      }
-      #anoncheckin-scan-status-container a {
-        color: white;
-      }
       #anoncheckin-participantNameLock {
         color: green;
       }

@@ -17,7 +17,8 @@ class CRM_Anoncheckin_Utils_Value {
   }
 
   public static function generateSignature($value) {
-    $secret = Civi::settings()->get('anoncheckin_hmac_secret');
+    $setting = CRM_Anoncheckin_Setting::singleton();
+    $secret = $setting->get('anoncheckin_hmac_secret');
     $hmac = hash_hmac('sha256', (string) $value, $secret, true); // raw binary
     $truncated = substr($hmac, 0, 12);               // 96 bits
     $sig = self::base64url_encode($truncated);             // 16 chars

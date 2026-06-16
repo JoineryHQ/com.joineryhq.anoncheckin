@@ -7,4 +7,16 @@
     <access_callback>1</access_callback>
     <is_public>true</is_public>
   </item>
+  <item>
+    <path>civicrm/admin/anoncheckin/staff</path>
+    <page_callback>CRM_Anoncheckin_Page_AnoncheckinStaff</page_callback>
+    <title>Anonymous QR session check-in: Staff Assistance</title>
+    <access_arguments>edit event participants</access_arguments>
+  </item>
+  <item>
+    <path>civicrm/admin/anoncheckin/staff/deviceLocked</path>
+    <page_callback>CRM_Anoncheckin_Form_AnoncheckinStaff_DeviceLocked</page_callback>
+    <title>Anonymous QR session check-in: Staff Assistance</title>
+    <access_arguments>edit event participants</access_arguments>
+  </item>
 </menu>
