@@ -144,7 +144,8 @@ class CRM_Anoncheckin_Extern_App {
     $deviceInfo['participantName'] = $this->participant['displayName'];
     $this->assign('device', $deviceInfo);
     
-    $deviceQrUrl = CRM_Anoncheckin_Utils_Qr::getQrImageUrl($this->device['deviceKey']);
+    $deviceQrData = "anoncheckin_deviceKey:" . $this->device['deviceKey'];
+    $deviceQrUrl = CRM_Anoncheckin_Utils_Qr::getQrImageUrl($deviceQrData);
     $this->assign('deviceQrUrl', $deviceQrUrl);
     $this->assign('isStaffInfo', TRUE);
   }

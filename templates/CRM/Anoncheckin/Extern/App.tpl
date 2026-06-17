@@ -117,34 +117,26 @@
       }
     </style>
     <script>
-      var anoncheckin_urlIsValid = function anoncheckin_urlIsValid(url, e) {
-        var paramName = $(e.currentTarget).data('scanType');
-
-        const currentPageUrl = new URL(window.location.href);
-        const testedUrl = new URL(url);
-
-        // (a) compare origin + pathname (ignore query + hash)
-        const samePage =
-                currentPageUrl.origin === testedUrl.origin &&
-                currentPageUrl.pathname === testedUrl.pathname;
-
-        // (b) check for param
-        const hasParam = testedUrl.searchParams.has(paramName);
-        if (samePage && hasParam) {
-          return true;
-        } else {
-          console.log('invalid url: ' + testedUrl);
-          console.log('samePage: ' + samePage);
-          console.log('hasParam: ' + hasParam, paramName);
-          return false;
-        }
-      }
-      
+      {literal}
+      // Attach click handlers to s and p buttons.
       $(document).ready(function () {
-        $('#anoncheckin-scan-badge').click(anoncheckinQrScanner.openScanner);
-        $('#anoncheckin-scan-session').click(anoncheckinQrScanner.openScanner);
+        $('#anoncheckin-scan-badge').click(
+          {
+            validateCallback: anoncheckinAppCallbacks.urlIsValid,
+            dataSuccessCallback: anoncheckinAppCallbacks.onDataSuccess
+          }, 
+          anoncheckinQrScanner.openScanner
+        );
+        $('#anoncheckin-scan-session').click(
+          {
+            validateCallback: anoncheckinAppCallbacks.urlIsValid,
+            dataSuccessCallback: anoncheckinAppCallbacks.onDataSuccess
+          }, 
+          anoncheckinQrScanner.openScanner
+        );
       });
 
+      {/literal}
       
     </script>
   </head>
@@ -210,7 +202,7 @@
           <p></p>
           {assign var="buttonClass" value="success"}
           {assign var="buttonLabel" value="Scan my badge"}
-          <button id="anoncheckin-scan-badge" data-scan-validate-callback="anoncheckin_urlIsValid" data-scan-type="p" class="button {$buttonClass}">{$buttonLabel}</button>
+          <button id="anoncheckin-scan-badge" data-scan-type="p" class="button {$buttonClass}">{$buttonLabel}</button>
         </div>
       {/if}
 
@@ -225,7 +217,7 @@
             <input type="hidden" name="ph" value="{$ph}">
             <!-- Confirm -->
             <input type="submit" class="button success" value="Yes, lock my device to this badge.">
-            <button id="anoncheckin-scan-badge" data-scan-validate-callback="anoncheckin_urlIsValid" data-scan-type="p" class="button secondary">No, that's not me. Scan another badge.</button>
+            <button id="anoncheckin-scan-badge" data-scan-type="p" class="button secondary">No, that's not me. Scan another badge.</button>
           </form>
         </div>
       {/if}

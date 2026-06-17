@@ -68,6 +68,7 @@ return [
       'title' => E::ts('Created'),
       'sql_type' => 'timestamp',
       'required' => TRUE,
+      'default' => 'CURRENT_TIMESTAMP',
       'description' => E::ts('Date/time check-in record was created'),
     ],
 
@@ -75,6 +76,7 @@ return [
       'title' => E::ts('Modified'),
       'sql_type' => 'timestamp',
       'required' => TRUE,
+      'default' => 'CURRENT_TIMESTAMP',
       'description' => E::ts('Date/time check-in record was last modified'),
     ],
 
@@ -102,7 +104,7 @@ return [
       'required' => TRUE,
       'description' => E::ts('Current status of this session participation'),
       'pseudoconstant' => [
-        'optionGroupName' => 'anoncheckin_session_status',
+        'option_group_name' => 'anoncheckin_session_status',
         'key_column' => 'value',
       ],
     ],

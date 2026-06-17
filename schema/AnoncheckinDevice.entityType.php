@@ -55,7 +55,7 @@ return [
       'description' => E::ts('Current status of this device'),
       'required' => TRUE,
       'pseudoconstant' => [
-        'optionGroupName' => 'anoncheckin_device_status',
+        'option_group_name' => 'anoncheckin_device_status',
         'key_column' => 'value',
       ],
     ],

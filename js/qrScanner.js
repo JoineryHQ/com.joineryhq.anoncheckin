@@ -1,3 +1,31 @@
+window.anoncheckinAppCallbacks = {
+  urlIsValid: function urlIsValid(url, e) {
+    var paramName = $(e.currentTarget).data('scanType');
+
+    const currentPageUrl = new URL(window.location.href);
+    const testedUrl = new URL(url);
+
+    // (a) compare origin + pathname (ignore query + hash)
+    const samePage =
+            currentPageUrl.origin === testedUrl.origin &&
+            currentPageUrl.pathname === testedUrl.pathname;
+
+    // (b) check for param
+    const hasParam = testedUrl.searchParams.has(paramName);
+    if (samePage && hasParam) {
+      return true;
+    } else {
+      console.log('invalid url: ' + testedUrl);
+      console.log('samePage: ' + samePage);
+      console.log('hasParam: ' + hasParam, paramName);
+      return false;
+    }
+  },
+  onDataSuccess: function onDataSuccess(qrData) {
+    window.location.href = qrData;    
+  }
+}
+      
 window.anoncheckinQrScanner = {
 
   isVideoCanceled: false,
@@ -61,12 +89,16 @@ window.anoncheckinQrScanner = {
 
   openScanner: async function(e) {
     e.preventDefault();
+console.log('openScanner e:', e);
 
     $('svg#anoncheckin-loading-indicator').show();
     anoncheckinQrScanner.isVideoCanceled = false;
 
-    const validateCallback =
-      window[$(e.currentTarget).data('scanValidateCallback')];
+    const validateCallback = e.data.validateCallback;
+    console.log('openScanner validateCallback:', validateCallback);
+
+    const dataSuccessCallback = e.data.dataSuccessCallback;
+    console.log('openScanner dataSuccessCallback:', dataSuccessCallback);
 
     const clickEvent = e;
 
@@ -119,7 +151,7 @@ window.anoncheckinQrScanner = {
             validateCallback(code.data, clickEvent)
           ) {
             stopVideo();
-            window.location.href = code.data;
+            dataSuccessCallback(code.data);
             return;
           }
 
@@ -148,6 +180,10 @@ window.anoncheckinQrScanner = {
   }
 
 };
+
+if (typeof CRM !== 'undefined' && CRM.$) {
+  $ = CRM.$;
+}
 
 $(function() {
   anoncheckinQrScanner.init();

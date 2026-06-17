@@ -51,7 +51,7 @@ class CRM_Anoncheckin_Utils_Device {
   
   
   private static function generateDeviceKey() {
-    return bin2hex(random_bytes(32));
+    return bin2hex(random_bytes(16));
   }
   
   /**
@@ -122,5 +122,5 @@ class CRM_Anoncheckin_Utils_Device {
     $parts = array_filter([$browser, $os]);
     $ret = implode(' on ', $parts);
     return $ret;
-  }  
+  }
 }

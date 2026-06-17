@@ -8,8 +8,8 @@ class CRM_Anoncheckin_Setting {
   private function __construct(array $config = NULL) {
     if (is_array($config)) {
       $this->config = $config;
+      $this->cachedOnly = TRUE;
     }
-    $this->cachedOnly = $cachedOnly;
   }
 
   /**

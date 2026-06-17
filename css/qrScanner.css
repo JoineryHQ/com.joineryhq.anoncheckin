@@ -31,6 +31,8 @@
   border-radius: 99999px;
   border: 1px solid gray;
   display: none;
+  background-color: #efefef;
+  max-width: revert;
 }
 #anoncheckin-video {
   position: relative;
@@ -48,6 +50,10 @@ svg#anoncheckin-loading-indicator {
   z-index: 2500;
   left: 37.5%;
   display: none;
+}
+
+svg#site-nav-close {
+  color: black;
 }
 
 .anoncheckin-loading-dot {
