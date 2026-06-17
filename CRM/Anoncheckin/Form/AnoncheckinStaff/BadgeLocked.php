@@ -8,7 +8,7 @@ use CRM_Anoncheckin_ExtensionUtil as E;
  *
  * @see https://docs.civicrm.org/dev/en/latest/framework/quickform/
  */
-class CRM_Anoncheckin_Form_AnoncheckinStaff_DeviceLocked extends CRM_Core_Form {
+class CRM_Anoncheckin_Form_AnoncheckinStaff_BadgeLocked extends CRM_Core_Form {
 
   var $_validatedValues = [];
   var $_userVars = [];
@@ -71,17 +71,16 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff_DeviceLocked extends CRM_Core_Form {
       ]);
     }
     
+    
+
     CRM_Core_Resources::singleton()->addStyleFile(E::LONG_NAME, '/css/qrScanner.css');
-    CRM_Core_Resources::singleton()->addStyleFile(E::LONG_NAME, '/css/CRM_Anoncheckin_Form_AnoncheckinStaff.css');
     CRM_Core_Resources::singleton()->addScriptUrl('https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js');
     CRM_Core_Resources::singleton()->addScriptFile(E::LONG_NAME, '/js/qrScanner.js');
     CRM_Core_Resources::singleton()->addScriptFile(E::LONG_NAME, '/js/CRM_Anoncheckin_Form_AnoncheckinStaff.js');
 
-    $sessionSuggestions = $this->_getSessionSuggestions([$this->_validatedValues['p'], ($this->_userVars['device']['participantId'] ?? NULL)]);
     // Pass useful info to JS.
     $jsVars = [
       'externAppUrl' => CRM_Anoncheckin_Utils_Extern::getAppUrl(),
-      'sessionSuggestions' => $sessionSuggestions,
     ];
     CRM_Core_Resources::singleton()->addVars('anoncheckin', $jsVars);
       
@@ -273,16 +272,6 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff_DeviceLocked extends CRM_Core_Form {
     }
   }
   
-  private function _getSessionSuggestions(array $participantIds): array {
-    // Get a set of session_ids which are recorded for any of the given participants.
-    $sessionParticipants = \Civi\Api4\AnoncheckinSessionParticipant::get()
-      ->addSelect('session_id')
-      ->addWhere('participant_id', 'IN', $participantIds)
-      ->execute();
-    $ret = CRM_Utils_Array::collect('session_id', (array)$sessionParticipants);
-    return $ret;
-  }
-
   private function _buildSessionOptions() {
     $ret = [];
     $participant = \Civi\Api4\Participant::get()

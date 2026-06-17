@@ -73,7 +73,7 @@ function anoncheckin_civicrm_enable(): void {
 function anoncheckin_civicrm_navigationMenu(&$menu) {
   $pages = [
     'staff_help' => [
-      'label'      => E::ts('Anonymous QR session check-in: Staff Support'),
+      'label'      => E::ts('Anonymous QR session check-in: Staff Assistance'),
       'name'       => 'anoncheckin-staff-help',
       'url'        => 'civicrm/admin/anoncheckin/staff',
       'parent' => array('Events'),

@@ -1,4 +1,4 @@
-<h2>Help for: Device locked to wrong badge</h2>
+<h2>Help for: Badge locked by another device</h2>
 
 <h3>Device status</h3>
 {if !empty($userVars.device)}
@@ -32,7 +32,6 @@
 
 {if !empty($sessionElementNames)}
   <h3>Record sessions for badge participant "{$userVars.badge.displayName}"</h3>
-  <p class="anoncheckin-session-suggestion">Likely suggestions appear in this style.</p>
   {foreach from=$sessionElementNames item=sessionElementName}
     <br />
     {$form[$sessionElementName].label}

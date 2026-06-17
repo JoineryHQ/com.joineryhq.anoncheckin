@@ -60,6 +60,17 @@ CRM.$(function($){
     return url.toString();
   }
 
+  var highlightSessionSuggestions = function highlightSessionSuggestions() {
+    if(CRM.vars.anoncheckin.sessionSuggestions && CRM.vars.anoncheckin.sessionSuggestions.length) {
+      $('input[type=radio][name^="sessionGroup_"]').each(function(idx, el){
+        var radioValue = parseInt($(el).val());
+        if(CRM.vars.anoncheckin.sessionSuggestions.indexOf(radioValue) != -1) {
+          $(el).closest('div.crm-option-label-pair').addClass('anoncheckin-session-suggestion');
+        }
+      });
+    }
+  }
+  
   $('#anoncheckin-scan-badge').click(
     {
       validateCallback: anoncheckinStaffCallbacks.validateBadge,
@@ -75,4 +86,5 @@ CRM.$(function($){
     anoncheckinQrScanner.openScanner
   );
 
+  highlightSessionSuggestions();
 });

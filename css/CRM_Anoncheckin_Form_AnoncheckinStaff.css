@@ -1,0 +1,14 @@
+.anoncheckin-session-suggestion label,
+p.anoncheckin-session-suggestion
+{
+  background-color: var(--crm-alert-success-bg-color);
+  font-weight: bold !important;
+  padding: .5em .5em .5em 0;
+}
+.anoncheckin-session-suggestion label::before{
+  content: "* ";
+}
+p.anoncheckin-session-suggestion::before {
+  content: " * ";
+  padding-left: 1em;
+}

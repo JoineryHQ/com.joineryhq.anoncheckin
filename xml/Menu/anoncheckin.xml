@@ -19,4 +19,16 @@
     <title>Anonymous QR session check-in: Staff Assistance</title>
     <access_arguments>edit event participants</access_arguments>
   </item>
+  <item>
+    <path>civicrm/admin/anoncheckin/staff/badgeLocked</path>
+    <page_callback>CRM_Anoncheckin_Form_AnoncheckinStaff_BadgeLocked</page_callback>
+    <title>Anonymous QR session check-in: Staff Assistance</title>
+    <access_arguments>edit event participants</access_arguments>
+  </item>
+  <item>
+    <path>civicrm/admin/anoncheckin/staff/deviceInvalid</path>
+    <page_callback>CRM_Anoncheckin_Form_AnoncheckinStaff_DeviceInvalid</page_callback>
+    <title>AnoncheckinStaff_DeviceInvalid</title>
+    <access_arguments>access CiviCRM</access_arguments>
+  </item>
 </menu>
