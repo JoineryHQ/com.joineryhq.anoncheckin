@@ -25,24 +25,14 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff_DeviceLocked extends CRM_Anoncheckin
   public function postProcess(): void {
     parent::postProcess();
 
-    // Close the device.
     $values = $this->exportValues();
     $p = $values['p'];    
-    \Civi\Api4\AnoncheckinDevice::update()
-      ->addWhere('device_key', '=', $this->_validatedValues['deviceKey'])
-      ->setValues([
-        'device_status_id' => CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_CLOSED
-      ])
-      ->execute();
+
+    // Close the device.
+    $this->_closeDevice($this->_validatedValues['deviceKey']);
+
     // Invalidate any devices locked to badge participant.
-    $deviceUpdate = \Civi\Api4\AnoncheckinDevice::update()
-      ->addWhere('device_status_id', '=', CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_LOCKED)
-      ->addWhere('participant_id', '=', $p)
-      ->setValues([
-        'device_status_id' => CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_INVALIDATED
-      ])
-      ->execute();
-    $updateCount = count((array) $deviceUpdate);
+    $updateCount = $this->_invalidateDevicesForParticipant($p);
     
     CRM_Core_Session::singleton()->setStatus(E::ts('Sessions saved.'), 'Success.', 'success no-popup');
     if ($updateCount) {

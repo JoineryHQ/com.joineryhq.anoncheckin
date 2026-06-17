@@ -1,14 +1,17 @@
 CRM.$(function($){
   var anoncheckinStaffCallbacks = {
+    // Callback to validate format of "Staff Info" qr code.
     validateStaffInfo: function validateStaffInfo(qrData, e) {
       return qrData.startsWith('anoncheckin_deviceKey:');
     },
+    // Success handler after scanning valid "Staff Info" qr code.    
     onDataSuccessStaffInfo: function onDataSuccessStaffInfo(qrData) {
       var deviceKey = qrData.replace(/^anoncheckin_deviceKey:/, '');
       console.log('found device key: ', deviceKey);
       var destination = replaceLocationParams({deviceKey: deviceKey});
       window.location.href = destination;
     },
+    // Callback to validate format of badge qr code.
     validateBadge: function validateBadge(qrData, e) {
       console.log('validateBadge', qrData);
 
@@ -36,6 +39,7 @@ CRM.$(function($){
 
       return false;
     },
+    // Success handler after scanning valid badge qr code.    
     onDataSuccessBadge: function onDataSuccessBadge(qrData) {      
       var url = new URL(qrData);
       var p =  url.searchParams.get('p');
@@ -45,6 +49,7 @@ CRM.$(function($){
     }
   };
   
+  // Modify this page's query parameters with whatever is given.
   var replaceLocationParams = function replaceLocationParams(params) {
     const url = new URL(window.location.href);
 
@@ -60,17 +65,28 @@ CRM.$(function($){
     return url.toString();
   }
 
+  // If we have sessionSuggestions, highlight them, and select those radio buttons.
   var highlightSessionSuggestions = function highlightSessionSuggestions() {
     if(CRM.vars.anoncheckin.sessionSuggestions && CRM.vars.anoncheckin.sessionSuggestions.length) {
       $('input[type=radio][name^="sessionGroup_"]').each(function(idx, el){
         var radioValue = parseInt($(el).val());
         if(CRM.vars.anoncheckin.sessionSuggestions.indexOf(radioValue) != -1) {
           $(el).closest('div.crm-option-label-pair').addClass('anoncheckin-session-suggestion');
+          $(el).prop('checked', 1).change();
         }
       });
     }
   }
-  
+
+  // Define a click handler for 'scan staff info' button.
+  $('#anoncheckin-scan-staffinfo').click(
+    {
+      validateCallback: anoncheckinStaffCallbacks.validateStaffInfo,
+      dataSuccessCallback: anoncheckinStaffCallbacks.onDataSuccessStaffInfo
+    }, 
+    anoncheckinQrScanner.openScanner
+  );  
+  // Define a click handler for 'scan badge' button.
   $('#anoncheckin-scan-badge').click(
     {
       validateCallback: anoncheckinStaffCallbacks.validateBadge,
@@ -78,13 +94,7 @@ CRM.$(function($){
     }, 
     anoncheckinQrScanner.openScanner
   );
-  $('#anoncheckin-scan-staffinfo').click(
-    {
-      validateCallback: anoncheckinStaffCallbacks.validateStaffInfo,
-      dataSuccessCallback: anoncheckinStaffCallbacks.onDataSuccessStaffInfo
-    }, 
-    anoncheckinQrScanner.openScanner
-  );
 
+  // Highlight session suggestions, if any.
   highlightSessionSuggestions();
 });

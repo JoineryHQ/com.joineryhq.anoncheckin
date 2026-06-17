@@ -1,21 +1,5 @@
 <h2>Help for: Badge locked by another device</h2>
 
-<h3>Device status</h3>
-{if !empty($userVars.device)}
-  <table style="margin-bottom: 1em;">
-    <tr><td><strong>Device Key:</strong></td><td>{$userVars.device.deviceKey}</td></tr>
-    <tr><td><strong>Participant ID:</strong></td><td>{$userVars.device.participantId|default:"[none]"}</td></tr>
-    <tr><td><strong>Participant Name:</strong></td><td>{$userVars.device.displayName|default:"[none]"}</td></tr>
-    <tr><td><strong>Description:</strong></td><td>{$userVars.device.userAgentShort}</td></tr>
-    <tr><td><strong>Device Status:</strong></td><td>{$userVars.device.status}</td></tr>
-  </table>
-  <a id="anoncheckin-scan-staffinfo" class="button" href="#">Re-Scan Device "Staff Info"</a>
-{else}  
-  <p>
-    <a id="anoncheckin-scan-staffinfo" class="button" href="#" style="display: inline !important;">Scan Device "Staff Info"</a>  Press "Staff Info" on participant's device and scan the resulting QR code.
-  </p>
-{/if}
-
 <h3 style="margin-top: 1em;">Participant badge</h3>
 {if !empty($userVars.badge)}
   <table style="margin-bottom: 1em;">
@@ -32,6 +16,7 @@
 
 {if !empty($sessionElementNames)}
   <h3>Record sessions for badge participant "{$userVars.badge.displayName}"</h3>
+  <p class="anoncheckin-session-suggestion">Likely suggestions appear in this style.</p>
   {foreach from=$sessionElementNames item=sessionElementName}
     <br />
     {$form[$sessionElementName].label}

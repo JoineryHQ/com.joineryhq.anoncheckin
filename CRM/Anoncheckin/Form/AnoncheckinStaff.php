@@ -340,4 +340,26 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff extends CRM_Core_Form {
     }
     
   }
+  
+  protected function _invalidateDevicesForParticipant($participantId) {
+    $deviceUpdate = \Civi\Api4\AnoncheckinDevice::update()
+      ->addWhere('device_status_id', '=', CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_LOCKED)
+      ->addWhere('participant_id', '=', $participantId)
+      ->setValues([
+        'device_status_id' => CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_INVALIDATED
+      ])
+      ->execute();
+    $updateCount = count((array) $deviceUpdate);
+    return $updateCount;
+  }  
+
+  protected function _closeDevice($deviceKey) {
+    \Civi\Api4\AnoncheckinDevice::update()
+      ->addWhere('device_key', '=', $deviceKey)
+      ->setValues([
+        'device_status_id' => CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_CLOSED
+      ])
+      ->execute();
+  }
+  
 }
