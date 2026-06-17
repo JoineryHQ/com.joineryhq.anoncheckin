@@ -64,3 +64,33 @@ function anoncheckin_civicrm_install(): void {
 function anoncheckin_civicrm_enable(): void {
   _anoncheckin_civix_civicrm_enable();
 }
+
+/**
+ * Implements hook_civicrm_navigationMenu().
+ *
+ * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_navigationMenu
+ */
+function anoncheckin_civicrm_navigationMenu(&$menu) {
+  $pages = [
+    'staff_help' => [
+      'label'      => E::ts('Anonymous QR session check-in: Staff Support'),
+      'name'       => 'anoncheckin-staff-help',
+      'url'        => 'civicrm/admin/anoncheckin/staff',
+      'parent' => array('Events'),
+      'permission' => 'edit event participants',
+    ],
+  ];
+
+  foreach ($pages as $item) {
+    // Check that our item doesn't already exist.
+    $menu_item_search = array('url' => $item['url']);
+    $menu_items = array();
+    CRM_Core_BAO_Navigation::retrieve($menu_item_search, $menu_items);
+    if (empty($menu_items)) {
+      // Now we're sure it doesn't exist; add it to the menu.
+      $path = implode('/', $item['parent']);
+      unset($item['parent']);
+      _anoncheckin_civix_insert_navigation_menu($menu, $path, $item);
+    }
+  }
+}
