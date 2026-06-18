@@ -34,7 +34,10 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff_DeviceInvalid extends CRM_Anonchecki
     $this->_closeDevice($values['deviceKey']);
 
     // Invalidate any devices locked to badge participant.
-    $updateCount = $this->_invalidateDevicesForParticipant($p);
+    $logNote = E::ts('Participant "%1" reported their device showed "problem verifying your identity".', [
+      1 => ($this->_userVars['badge']['displayName'] ?? '[unknown]'),
+    ]);    
+    $updateCount = $this->_invalidateDevicesForParticipant($p, $logNote);
     
     if ($updateCount) {
       $statusMessage = E::ts('%1 device(s) that were locked for %2 have been invalidated.',[
@@ -68,6 +71,20 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff_DeviceInvalid extends CRM_Anonchecki
         $this->_sessionSuggestions[] = $sessionParticipant['session_id'];
       }
       $this->_userVars['deviceSessions'] = $deviceSessions;
+      
+      // Build a list of log messages on this device.
+      $deviceLogEntries = [];
+      $deviceLogGet = \Civi\Api4\AnoncheckinDevice::get()
+        ->addWhere('device_key', '=', $deviceKey)
+        ->addChain('device_log', \Civi\Api4\AnoncheckinDeviceLog::get()
+          -> addWhere('device_id', '=', '$id')
+          ->addOrderBy('logged_at', 'DESC')
+        )
+        ->execute();
+      foreach ($deviceLogGet[0]['device_log'] as $deviceLog) {      
+        $deviceLogEntries[] = $deviceLog;
+      }
+      $this->_userVars['deviceLogEntries'] = $deviceLogEntries;
     }
     parent::_processValues();
   }

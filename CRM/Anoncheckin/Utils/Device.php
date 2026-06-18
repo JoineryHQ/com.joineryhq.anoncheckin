@@ -38,7 +38,7 @@ class CRM_Anoncheckin_Utils_Device {
    * 
    * @return Boolean True on success, false on failure.
    */
-  public static function lockDeviceToParticipant($device, $participantId) {
+  public static function extern_lockDeviceToParticipant($device, $participantId) {
     if (empty($device['deviceKey'])) {
       return FALSE;
     }
@@ -122,5 +122,31 @@ class CRM_Anoncheckin_Utils_Device {
     $parts = array_filter([$browser, $os]);
     $ret = implode(' on ', $parts);
     return $ret;
+  }
+  
+  public static function createDeviceLogEntry(int $eventTypeId, string $logMessage, int $deviceId = NULL, string $deviceKey = NULL): void {
+    if (!$deviceId) {
+      $device = \Civi\Api4\AnoncheckinDevice::get()
+        ->addSelect('id')
+        ->addWhere('device_key', '=', $deviceKey)
+        ->execute()
+        ->first();
+      $deviceId = $device['id'];
+    }
+    
+    if (!$deviceId) {
+      // deviceKey is bad. just log and return.
+      \Civi::log()->error("anoncheckin: cannot create device_log entry, because cannot find a device given identifiers: deviceKey=$deviceKey; deviceId=$deviceId");
+      return;
+    }
+    $deviceLogValues = [
+      'device_id' => $deviceId,
+      'user_cid' => CRM_Core_Session::singleton()->getLoggedInContactID(),
+      'event_type_id' => $eventTypeId,
+      'details' => $logMessage,
+    ];
+    \Civi\Api4\AnoncheckinDeviceLog::create()
+      ->setValues($deviceLogValues)
+      ->execute();
   }
 }

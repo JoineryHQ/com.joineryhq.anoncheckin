@@ -28,7 +28,7 @@
   <item>
     <path>civicrm/admin/anoncheckin/staff/deviceInvalid</path>
     <page_callback>CRM_Anoncheckin_Form_AnoncheckinStaff_DeviceInvalid</page_callback>
-    <title>AnoncheckinStaff_DeviceInvalid</title>
+    <title>Anonymous QR session check-in: Staff Assistance</title>
     <access_arguments>access CiviCRM</access_arguments>
   </item>
 </menu>

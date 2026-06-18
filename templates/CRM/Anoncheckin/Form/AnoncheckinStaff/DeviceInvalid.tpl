@@ -18,6 +18,14 @@
       {/foreach}
     </table>
   {/if}
+  {if !empty($userVars.deviceLogEntries)}
+    <h3>Status logs for this device</h3>
+    <table style="margin-bottom: 1em;">
+      {foreach from=$userVars.deviceLogEntries item=deviceLogEntry}
+      <tr><td>{$deviceLogEntry.logged_at|crmDate:"Datetime"}</td><td>{$deviceLogEntry.details}</td></tr>
+      {/foreach}
+    </table>
+  {/if}
 {else}  
   <p>
     <a id="anoncheckin-scan-staffinfo" class="button" href="#" style="display: inline !important;">Scan Device "Staff Info"</a>  Press "Staff Info" on participant's device and scan the resulting QR code.

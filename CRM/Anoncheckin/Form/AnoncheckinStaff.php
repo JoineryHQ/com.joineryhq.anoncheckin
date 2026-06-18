@@ -135,7 +135,7 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff extends CRM_Core_Form {
     $this->_updateSessions();
     
     // Set on-submit redirect path.
-    $urlPath = implode('/', $this->urlPath);
+    $urlPath = 'civicrm/admin/anoncheckin/staff';
     $url = CRM_Utils_System::url($urlPath, "reset=1");
     CRM_Core_Session::singleton()->pushUserContext($url);
     
@@ -378,7 +378,10 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff extends CRM_Core_Form {
       ->execute();
     $updateCount = count((array) $deviceUpdate);
     if ($updateCount && $logNote) {
-      // fixme: Log invalidation for all affected devices.
+      foreach ($deviceUpdate as $device) {
+        // Log invalidation for all affected devices.
+        CRM_Anoncheckin_Utils_Device::createDeviceLogEntry(CRM_Anoncheckin_Utils_Extern::DEVICE_LOG_TYPE_ADMIN, 'Invalidated by staff action. Log note: '. $logNote, $device['id']);
+      }
     }
     return $updateCount;
   }  
@@ -390,7 +393,8 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff extends CRM_Core_Form {
         'device_status_id' => CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_CLOSED
       ])
       ->execute();
-    // fixme: Log closing of this device
+    // Log closing of this device
+    CRM_Anoncheckin_Utils_Device::createDeviceLogEntry(CRM_Anoncheckin_Utils_Extern::DEVICE_LOG_TYPE_ADMIN, 'Closed by staff action. Log note: '. $logNote, NULL, $deviceKey);
   }
   
 }

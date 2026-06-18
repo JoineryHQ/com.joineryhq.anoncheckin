@@ -29,7 +29,10 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff_BadgeLocked extends CRM_Anoncheckin_
     $p = (int)$values['p'];    
 
     // Invalidate any devices locked to badge participant.
-    $updateCount = $this->_invalidateDevicesForParticipant($p);
+    $logNote = E::ts('Participant "%1" reported their badge was "locked to some other device".', [
+      1 => ($this->_userVars['badge']['displayName'] ?? '[unknown]'),
+    ]);
+    $updateCount = $this->_invalidateDevicesForParticipant($p, $logNote);
     
     CRM_Core_Session::singleton()->setStatus(E::ts('Sessions saved.'), 'Success.', 'success no-popup');
     if ($updateCount) {
