@@ -8,76 +8,85 @@ use CRM_Anoncheckin_ExtensionUtil as E;
  *
  * @see https://docs.civicrm.org/dev/en/latest/framework/quickform/
  */
-class CRM_Anoncheckin_Form_AnoncheckinStaff_DeviceInvalid extends CRM_Core_Form {
+class CRM_Anoncheckin_Form_AnoncheckinStaff_DeviceInvalid extends CRM_Anoncheckin_Form_AnoncheckinStaff {
 
+  // This form uses its own set of sessionSuggestions.
+  var $_sessionSuggestions = [];
+
+  public function __construct() {
+    $this->_dataTypes = ['badge', 'device'];
+    $this->_allowedDeviceStatuses[] = CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_INVALIDATED;
+    parent::__construct();
+  }
   /**
    * @throws \CRM_Core_Exception
    */
   public function buildQuickForm(): void {
-
-    // add form elements
-    $this->add(
-      'select', // field type
-      'favorite_color', // field name
-      'Favorite Color', // field label
-      $this->getColorOptions(), // list of options
-      TRUE // is required
-    );
-    $this->addButtons([
-      [
-        'type' => 'submit',
-        'name' => E::ts('Submit'),
-        'isDefault' => TRUE,
-      ],
-    ]);
-
-    // export form elements
-    $this->assign('elementNames', $this->getRenderableElementNames());
+    parent::_preBuildQuickForm();
     parent::buildQuickForm();
   }
 
   public function postProcess(): void {
     $values = $this->exportValues();
-    $options = $this->getColorOptions();
-    CRM_Core_Session::setStatus(E::ts('You picked color "%1"', [
-      1 => $options[$values['favorite_color']],
-    ]));
-    parent::postProcess();
-  }
+    $p = (int) $values['p'];    
 
-  public function getColorOptions(): array {
-    $options = [
-      '' => E::ts('- select -'),
-      '#f00' => E::ts('Red'),
-      '#0f0' => E::ts('Green'),
-      '#00f' => E::ts('Blue'),
-      '#f0f' => E::ts('Purple'),
-    ];
-    foreach (['1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e'] as $f) {
-      $options["#{$f}{$f}{$f}"] = E::ts('Grey (%1)', [1 => $f]);
+    // Close the device.
+    $this->_closeDevice($values['deviceKey']);
+
+    // Invalidate any devices locked to badge participant.
+    $updateCount = $this->_invalidateDevicesForParticipant($p);
+    
+    if ($updateCount) {
+      $statusMessage = E::ts('%1 device(s) that were locked for %2 have been invalidated.',[
+        1 => $updateCount,
+        2 => $this->_userVars['badge']['displayName'],
+      ]);
+      CRM_Core_Session::singleton()->setStatus($statusMessage, 'Devices invalidated.', 'success no-popup');
     }
-    return $options;
+      
+    CRM_Core_Session::singleton()->setStatus(E::ts('Please ask the participant to re-scan their badge on their device.'), 'Action required.', 'alert no-popup');
+    parent::postProcess();    
   }
-
-  /**
-   * Get the fields/elements defined in this form.
-   *
-   * @return array (string)
-   */
-  public function getRenderableElementNames(): array {
-    // The _elements list includes some items which should not be
-    // auto-rendered in the loop -- such as "qfKey" and "buttons".  These
-    // items don't have labels.  We'll identify renderable by filtering on
-    // the 'label'.
-    $elementNames = [];
-    foreach ($this->_elements as $element) {
-      /** @var HTML_QuickForm_Element $element */
-      $label = $element->getLabel();
-      if (!empty($label)) {
-        $elementNames[] = $element->getName();
+  
+  protected function _processValues() {
+    $deviceKey = CRM_Utils_Request::retrieve('deviceKey', 'String');
+    if ($deviceKey) {
+      $deviceSessions = [];
+      // Build a list of sessions scanned on this device.
+      $deviceGet = \Civi\Api4\AnoncheckinDevice::get()
+        ->addWhere('device_key', '=', $deviceKey)
+        ->addChain('session_participant', \Civi\Api4\AnoncheckinSessionParticipant::get()
+          ->addWhere('device_id', '=', '$id')
+          ->addChain('session', \Civi\Api4\AnoncheckinSession::get()
+            ->addWhere('id', '=', '$session_id')
+          )
+        )
+        ->execute();
+      foreach ($deviceGet[0]['session_participant'] as $sessionParticipant) {
+        $sessionTitle = $sessionParticipant['session'][0]['title'];
+        $deviceSessions[] = $sessionTitle;
+        $this->_sessionSuggestions[] = $sessionParticipant['session_id'];
       }
+      $this->_userVars['deviceSessions'] = $deviceSessions;
     }
-    return $elementNames;
+    parent::_processValues();
   }
 
+  /** 
+   * Override parent::_getSessionSuggestions because we DO NOT want to suggest
+   * sessions based on the device participant, because this device is invalid, 
+   * and so the device owner is almost surely not the same person as the device
+   * participant.
+   * Instead, we want to suggest sessions only from this device.
+   * Therefore, we'll completely ignore the $participantIds param return
+   * $this->_sessionSuggestions, which was built in own own (also overridden)
+   * _processValues().
+   * 
+   * @param array $participantIds NOT USED, see above.
+   * @return array
+   */
+  protected function _getSessionSuggestions(array $participantIds): array {
+    return $this->_sessionSuggestions;
+  }
+  
 }

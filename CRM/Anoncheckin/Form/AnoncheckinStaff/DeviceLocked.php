@@ -26,7 +26,7 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff_DeviceLocked extends CRM_Anoncheckin
     parent::postProcess();
 
     $values = $this->exportValues();
-    $p = $values['p'];    
+    $p = (int)$values['p'];    
 
     // Close the device.
     $this->_closeDevice($this->_validatedValues['deviceKey']);

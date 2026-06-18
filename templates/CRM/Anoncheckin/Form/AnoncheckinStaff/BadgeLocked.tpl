@@ -5,7 +5,8 @@
   <table style="margin-bottom: 1em;">
     <tr><td><strong>Participant ID:</strong></td><td>{$userVars.badge.participantId}</td></tr>
     <tr><td><strong>Participant Name:</strong></td><td>{$userVars.badge.displayName}</td></tr>
-    <tr><td><strong>Event Titlte:</strong></td><td>{$userVars.badge.eventTitle}</td></tr>
+    <tr><td><strong>Event Title:</strong></td><td>{$userVars.badge.eventTitle}</td></tr>
+    <tr><td><strong>Locked to device:</strong></td><td>{$userVars.badge.lockedDeviceUserAgent}</td></tr>
   </table>
   <a id="anoncheckin-scan-badge" class="button" href="#" data-scan-type="p">Re-scan participant badge</a>
 {else}  

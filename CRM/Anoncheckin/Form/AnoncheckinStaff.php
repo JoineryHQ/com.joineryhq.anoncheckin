@@ -14,12 +14,15 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff extends CRM_Core_Form {
   var $_userVars = [];
   var $_sessionOptions = [];
   var $_dataTypes = [];
+  var $_allowedDeviceStatuses = [
+    CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_LOCKED,
+  ];
   
   /**
    * @throws \CRM_Core_Exception
    */
   public function _preBuildQuickForm(): void {
-
+    
     // Process any values given (in query params or POST fields)
     $this->_processValues();
 
@@ -106,8 +109,28 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff extends CRM_Core_Form {
     parent::buildQuickForm();
   }
 
+  public function validate() {
+    if (
+      // If we're handling devices at all, and we don't know a device, that's an error.
+      $this->_hasDataType('device') 
+      && !CRM_Utils_Request::retrieve('deviceKey', 'String')
+    ) {
+      $this->_errors['p'] = E::ts('Invalid deviceKey. Please re-scan "Staff Info".');
+    }
+    if (
+      // If we're handling badges at all, and we don't know a valid pid, that's an error.
+      $this->_hasDataType('badge') 
+      && (
+        !($p = CRM_Utils_Request::retrieve('p', 'Integer'))
+        || !($ph = CRM_Utils_Request::retrieve('ph', 'String'))
+      )
+    ) {
+      $this->_errors['p'] = E::ts('Invalid badge data. Please re-scan badge.');
+    }
+    return parent::validate();
+  }
+  
   public function postProcess(): void {
-    $values = $this->exportValues();
 
     $this->_updateSessions();
     
@@ -145,7 +168,7 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff extends CRM_Core_Form {
     return $this->_validatedValues;
   }
   
-  public function _processValues() {
+  protected function _processValues() {
     // Process deviceKey.
     if (
       // Either we're not handling devices at all, or we know the device.
@@ -155,8 +178,8 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff extends CRM_Core_Form {
       $device = \Civi\Api4\AnoncheckinDevice::get()
         ->addSelect('id', 'device_status_id:label', 'user_agent_short', 'participant_id')
         ->addWhere('device_key', '=', $deviceKey)
-        // We only deal with locked devices.
-        ->addWhere('device_status_id', '=', CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_LOCKED)
+        // We only deal with devices of relevant statuses.
+        ->addWhere('device_status_id', 'IN', $this->_allowedDeviceStatuses)
         ->addChain(
           'participant', 
           \Civi\Api4\Participant::get()
@@ -209,11 +232,13 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff extends CRM_Core_Form {
             ->addSelect('display_name')
             ->addWhere('id', '=', '$contact_id')
           )
-          ->addChain(
-            'event',
-            \Civi\Api4\Event::get()
+          ->addChain('event',\Civi\Api4\Event::get()
             ->addSelect('title')
             ->addWhere('id', '=', '$event_id')
+          )
+          ->addChain('locked_device', \Civi\Api4\AnoncheckinDevice::get()
+            ->addWhere('device_status_id', '=', CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_LOCKED)
+            ->addWhere('participant_id', '=', $p)
           )
           ->setLimit(1)
           ->execute()
@@ -222,13 +247,14 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff extends CRM_Core_Form {
         $this->_userVars['badge'] = [
           'participantId' => $p,
           'displayName' => $participant['contact'][0]['display_name'],
-          'eventTitle' => $participant['event'][0]['title']
+          'eventTitle' => $participant['event'][0]['title'],
+          'lockedDeviceUserAgent' => ($participant['locked_device'][0]['user_agent_short'] ?? NULL),
         ];
       }
     }
   }
   
-  private function _getSessionSuggestions(array $participantIds): array {
+  protected function _getSessionSuggestions(array $participantIds): array {
     // Get a set of session_ids which are recorded for any of the given participants.
     $sessionParticipants = \Civi\Api4\AnoncheckinSessionParticipant::get()
       ->addSelect('session_id')
@@ -338,10 +364,11 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff extends CRM_Core_Form {
         ->addValue('session_status_id', CRM_Anoncheckin_Utils_Extern::SESSION_STATUS_COMPLETED)
         ->execute();
     }
+    CRM_Core_Session::singleton()->setStatus(E::ts('Sessions saved.'), 'Success.', 'success no-popup');
     
   }
   
-  protected function _invalidateDevicesForParticipant($participantId) {
+  protected function _invalidateDevicesForParticipant(int $participantId, string $logNote = ''): int {
     $deviceUpdate = \Civi\Api4\AnoncheckinDevice::update()
       ->addWhere('device_status_id', '=', CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_LOCKED)
       ->addWhere('participant_id', '=', $participantId)
@@ -350,6 +377,9 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff extends CRM_Core_Form {
       ])
       ->execute();
     $updateCount = count((array) $deviceUpdate);
+    if ($updateCount && $logNote) {
+      // fixme: Log invalidation for all affected devices.
+    }
     return $updateCount;
   }  
 
@@ -360,6 +390,7 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff extends CRM_Core_Form {
         'device_status_id' => CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_CLOSED
       ])
       ->execute();
+    // fixme: Log closing of this device
   }
   
 }

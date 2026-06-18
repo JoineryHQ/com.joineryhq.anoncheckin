@@ -25,6 +25,9 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff_BadgeLocked extends CRM_Anoncheckin_
   public function postProcess(): void {
     parent::postProcess();
 
+    $values = $this->exportValues();
+    $p = (int)$values['p'];    
+
     // Invalidate any devices locked to badge participant.
     $updateCount = $this->_invalidateDevicesForParticipant($p);
     

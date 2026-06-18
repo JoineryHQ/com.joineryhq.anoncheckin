@@ -1,27 +1,55 @@
-{* HEADER *}
+<h2>Help for: "Problem verifying identity"</h2>
 
-<div class="crm-submit-buttons">
-{include file="CRM/common/formButtons.tpl" location="top"}
-</div>
+<h3>Device status</h3>
+{if !empty($userVars.device)}
+  <table style="margin-bottom: 1em;">
+    <tr><td><strong>Device Key:</strong></td><td>{$userVars.device.deviceKey}</td></tr>
+    <tr class="error"><td><strong>Was Locked to Participant:</strong></td><td>{$userVars.device.displayName|default:"[none]"}</td></tr>
+    <tr><td><strong>Was Locked to Participant ID:</strong></td><td>{$userVars.device.participantId|default:"[none]"}</td></tr>
+    <tr><td><strong>Description:</strong></td><td>{$userVars.device.userAgentShort}</td></tr>
+    <tr><td><strong>Device Status:</strong></td><td>{$userVars.device.status}</td></tr>
+  </table>
+  <a id="anoncheckin-scan-staffinfo" class="button" href="#">Re-Scan Device "Staff Info"</a>
+  {if !empty($userVars.deviceSessions)}
+    <h3>Sessions scanned for "{$userVars.device.displayName|default:"[none]"}" on this device</h3>
+    <table style="margin-bottom: 1em;">
+      {foreach from=$userVars.deviceSessions item=deviceSession}
+      <tr><td>{$deviceSession}</td></tr>
+      {/foreach}
+    </table>
+  {/if}
+{else}  
+  <p>
+    <a id="anoncheckin-scan-staffinfo" class="button" href="#" style="display: inline !important;">Scan Device "Staff Info"</a>  Press "Staff Info" on participant's device and scan the resulting QR code.
+  </p>
+{/if}
 
-{* FIELD EXAMPLE: OPTION 1 (AUTOMATIC LAYOUT) *}
+<h3 style="margin-top: 1em;">Participant badge</h3>
+{if !empty($userVars.badge)}
+  <table style="margin-bottom: 1em;">
+    <tr><td><strong>Participant ID:</strong></td><td>{$userVars.badge.participantId}</td></tr>
+    <tr><td><strong>Participant Name:</strong></td><td>{$userVars.badge.displayName}</td></tr>
+    <tr><td><strong>Event Title:</strong></td><td>{$userVars.badge.eventTitle}</td></tr>
+    <tr><td><strong>Locked to device:</strong></td><td>{$userVars.badge.lockedDeviceUserAgent|default:"[none]"}</td></tr>
+  </table>
+  <a id="anoncheckin-scan-badge" class="button" href="#" data-scan-type="p">Re-scan participant badge</a>
+{else}  
+  <p>
+    <a id="anoncheckin-scan-badge" class="button" href="#" data-scan-type="p">Scan participant badge</a>
+  </p>
+{/if}
 
-{foreach from=$elementNames item=elementName}
-  <div class="crm-section">
-    <div class="label">{$form.$elementName.label}</div>
-    <div class="content">{$form.$elementName.html}</div>
-    <div class="clear"></div>
+{if !empty($sessionElementNames)}
+  <h3>Record sessions for badge participant "{$userVars.badge.displayName}"</h3>
+  <p class="anoncheckin-session-suggestion">Likely suggestions appear in this style.</p>
+  {foreach from=$sessionElementNames item=sessionElementName}
+    <br />
+    {$form[$sessionElementName].label}
+    {$form[$sessionElementName].html}
+  {/foreach}
+  <div class="crm-submit-buttons">
+  {include file="CRM/common/formButtons.tpl" location="bottom"}
   </div>
-{/foreach}
+{/if}
 
-{* FIELD EXAMPLE: OPTION 2 (MANUAL LAYOUT)
-
-  <div>
-    <span>{$form.favorite_color.label}</span>
-    <span>{$form.favorite_color.html}</span>
-  </div>
-
-{* FOOTER *}
-<div class="crm-submit-buttons">
-{include file="CRM/common/formButtons.tpl" location="bottom"}
-</div>
+{include file="CRM/Anoncheckin/common/qrScanner.tpl"}

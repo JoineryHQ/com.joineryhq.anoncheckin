@@ -206,7 +206,7 @@ class CRM_Anoncheckin_Extern_App {
     // Lock device to badge.
     if ($this->device = CRM_Anoncheckin_Utils_Device::lockDeviceToParticipant($this->device, $p)) {
       $this->participant = CRM_Anoncheckin_Utils_ExternData::cacheSelect('selectParticipantInfo', $p);
-      $this->setMessage("Your device has now been locked to the badge for <strong>{$this->participant['displayName']}<strong>", 'success');
+      $this->setMessage("Your device is now locked to the badge for <strong>{$this->participant['displayName']}<strong>", 'success');
     }
     else {
       $this->fatal('There was a problem locking your device to this badge. Please try again.');
