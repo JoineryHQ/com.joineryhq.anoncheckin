@@ -37,7 +37,6 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff_DeviceLocked extends CRM_Anoncheckin
     ]);
     $updateCount = $this->_invalidateDevicesForParticipant($p, $logNote);
     
-    CRM_Core_Session::singleton()->setStatus(E::ts('Sessions saved.'), 'Success.', 'success no-popup');
     if ($updateCount) {
       $statusMessage = E::ts('%1 device(s) that were locked for %2 have been invalidated.',[
         1 => $updateCount,
