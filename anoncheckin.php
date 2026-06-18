@@ -94,3 +94,30 @@ function anoncheckin_civicrm_navigationMenu(&$menu) {
     }
   }
 }
+
+/**
+ * Implements hook_civicrm_alterBarcode().
+ *
+ * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_alterBarcode
+ */
+function anoncheckin_civicrm_alterBarcode(&$data, $type, $context) {
+  if (
+    $type != 'qrcode'
+    || $context != 'name_badge'
+  ) {
+    // We only operate on name badge qr codes.
+    return;
+  }
+  $participant = \Civi\Api4\Participant::get()
+    ->addSelect('event_id')
+    ->addWhere('id', '=', $data['participant_id'])
+    ->execute()
+    ->first();
+  // If there are anoncheckin sessions for this event, we will simply replace the qr code 
+  // destination
+  if (CRM_Anoncheckin_Utils_Session::eventHasSessions((int)$participant['event_id'])) {
+    $pid = $data['participant_id'];
+    $q = ['p' => $pid, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)];
+    $data['current_value'] = CRM_Anoncheckin_Utils_Extern::getAppUrl() . '?' . http_build_query($q);
+  }
+}
