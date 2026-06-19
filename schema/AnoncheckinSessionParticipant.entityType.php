@@ -109,6 +109,15 @@ return [
       ],
     ],
 
+    'is_processed' => [
+      'title' => E::ts('Processed by scheduled job?'),
+      'sql_type' => 'boolean',
+      'input_type' => 'CheckBox',
+      'required' => TRUE,
+      'default' => FALSE,
+      'description' => E::ts('True if this has been processed by scheduled jobs'),
+    ],
+
   ],
 
   'getIndices' => fn() => [
@@ -140,6 +149,12 @@ return [
     'index_session_status_id' => [
       'fields' => [
         'session_status_id' => TRUE,
+      ],
+    ],
+
+    'index_is_processed' => [
+      'fields' => [
+        'is_processed' => TRUE,
       ],
     ],
 
