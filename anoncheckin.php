@@ -20,7 +20,12 @@ function anoncheckin_civicrm_postProcess($formName, &$form) {
       // Rebuild cached config.
       // TODO: This doesn't address settings changes via api or other mechanisms
       // and as of this writing, we have no mechanism to do so.
-      CRM_Anoncheckin_Utils_Config::refreshConfigFile(TRUE);
+      if (CRM_Anoncheckin_Utils_Config::refreshConfigFile(TRUE)) {
+        CRM_Core_Session::setStatus('Updated extension cached config.', 'Cache updated', 'success');
+      }
+      else {
+        CRM_Core_Session::setStatus('Could not update extension cached config.', 'Error', 'error');
+      }
     }
   }
 }

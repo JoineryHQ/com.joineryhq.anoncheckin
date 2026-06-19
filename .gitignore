@@ -1,1 +1,2 @@
 extern/cache/*
+!extern/cache/.htaccess

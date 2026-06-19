@@ -22,7 +22,7 @@ class CRM_Anoncheckin_Utils_Config {
    * minutes old.
    *
    * @param Bool $force Should we re-create the file if it already exists?
-   * 
+   *
    * @return boolean True if file was re-written; otherwise false.
    *
    * @throws CRM_Core_Exception
@@ -63,14 +63,21 @@ class CRM_Anoncheckin_Utils_Config {
     }
 
     $json = json_encode($config);
-    try {
-      $tmpNam = tempnam($dir, 'config_temp_');
-      file_put_contents($tmpNam, $json);
-      rename($tmpNam, $filePath);
-    } catch (Exception $e) {
-      throw new CRM_Core_Exception('Error updating config.json file for extension "' . E::SHORT_NAME . '". Error message was: ' . $e->getMessage());
+    $tmpNam = tempnam($dir, 'config_temp_');
+    if (!$tmpNam) {
+      throw new CRM_Core_Exception(E::SHORT_NAME . ": Unable to create temp file for config.json.");
     }
-    
+    if (file_put_contents($tmpNam, $json) === FALSE) {
+      throw new CRM_Core_Exception(E::SHORT_NAME . ": Unable to write temp file for config.json");
+    }
+    if (!rename($tmpNam, $filePath)) {
+      throw new CRM_Core_Exception(E::SHORT_NAME . ": Unable to rename temp file to config.json");
+    }
+    clearstatcache();
+    if (!file_exists($filePath)) {
+      throw new CRM_Core_Exception(E::SHORT_NAME . ": config.json does not exist after rebuilding.");
+    }
+
     return TRUE;
   }
 
