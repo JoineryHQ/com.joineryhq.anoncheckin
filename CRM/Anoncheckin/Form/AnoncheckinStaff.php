@@ -17,7 +17,7 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff extends CRM_Core_Form {
   var $_allowedDeviceStatuses = [
     CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_LOCKED,
   ];
-  
+
   /**
    * @throws \CRM_Core_Exception
    */
@@ -176,10 +176,8 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff extends CRM_Core_Form {
       && $deviceKey = CRM_Utils_Request::retrieve('deviceKey', 'String')
     ) {
       $device = \Civi\Api4\AnoncheckinDevice::get()
-        ->addSelect('id', 'device_status_id:label', 'user_agent_short', 'participant_id')
+        ->addSelect('id', 'device_status_id', 'device_status_id:label', 'user_agent_short', 'participant_id')
         ->addWhere('device_key', '=', $deviceKey)
-        // We only deal with devices of relevant statuses.
-        ->addWhere('device_status_id', 'IN', $this->_allowedDeviceStatuses)
         ->addChain(
           'participant', 
           \Civi\Api4\Participant::get()
@@ -195,7 +193,12 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff extends CRM_Core_Form {
         ->setLimit(1)
         ->execute()
         ->first();
-      if ($device) {
+      if (!$device) { 
+        // No device found.
+        CRM_Core_Session::setStatus('The scanned device does not provide valid data. Try reloading Staff Info on the participant\'s device.', 'Invalid device', 'error no-popup');
+      }
+      elseif(!$this->_deviceStatusIsAllowed($device)) {
+        // Device found, and status is allowed for this action.
         $this->_validatedValues['deviceKey'] = $deviceKey;
         $this->_userVars['device'] = [
           'deviceKey' => $deviceKey,
@@ -204,9 +207,6 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff extends CRM_Core_Form {
           'participantId' => ($device['participant'][0]['id'] ?? NULL),
           'displayName' => ($device['participant'][0]['contact'][0]['display_name'] ?? NULL),
         ];
-      }
-      else {
-        CRM_Core_Session::setStatus('The scanned device does not provide valid data. Try reloading Staff Info on the participant\'s device.', 'Invalid device', 'error no-popup');
       }
     }
     
@@ -396,5 +396,39 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff extends CRM_Core_Form {
     // Log closing of this device
     CRM_Anoncheckin_Utils_Device::createDeviceLogEntry(CRM_Anoncheckin_Utils_Extern::DEVICE_LOG_TYPE_ADMIN, 'Closed by staff action. Log note: '. $logNote, NULL, $deviceKey);
   }
-  
+
+  /**
+   * Validate the status of the given device. 
+   * Because this is called during _processValues(), it is appropriate, if desired
+   * to send any user-facing messages with CRM_Core_Session::setStatus().
+   *
+   * @param Array $device AnoncheckinDevice entity,
+   */
+  protected function _deviceStatusIsAllowed($device): bool {
+    if (!in_array($device['device_status_id'], $this->_allowedDeviceStatuses)) {
+      $allowedDeviceStatusLabels = [];
+      $deviceStatusLabelsById = CRM_Core_OptionGroup::values('anoncheckin_device_status');
+      $deviceStatusLabel = $deviceStatusLabelsById[$device['device_status_id']];
+      foreach ($this->_allowedDeviceStatuses as $allowedDeviceStatusId) {
+        $allowedDeviceStatusLabels[] = '"' . $deviceStatusLabelsById[$allowedDeviceStatusId] . '"';
+      }
+
+      if (count($allowedDeviceStatusLabels) > 1) {
+        $statusMessage = E::ts('The scanned device has a status of "%1", but this action is only for devices with one of these statuses: %2', [
+          '1' => $deviceStatusLabel,
+          '2' => implode(', ', $allowedDeviceStatusLabels),
+        ]);
+      }
+      else {
+        $statusMessage = E::ts('The scanned device has a status of "%1", but this action is only for devices with status: %2', [
+          '1' => $deviceStatusLabel,
+          '2' => implode(', ', $allowedDeviceStatusLabels),
+        ]);
+      }
+      CRM_Core_Session::setStatus($statusMessage, 'Invalid device status', 'error no-popup');
+      return FALSE;
+    }
+            
+    return TRUE;
+  }
 }
