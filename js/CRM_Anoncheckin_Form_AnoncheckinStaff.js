@@ -18,9 +18,16 @@ CRM.$(function($){
       var paramName = 'p';
 
       const externAppUrl = new URL(CRM.vars.anoncheckin.externAppUrl);
-      const testedUrl = new URL(qrData);
+      var testedUrl;
+      try {
+        testedUrl = new URL(qrData);
+      } catch (_) {
+        // If we're here, qrData is not a valid URL, so clearly this is not valid
+        // data for us.
+        return false;
+      }
 
-      // (a) compare origin + pathname (ignore query + hash)
+      // (a) ensure baseurl/path is what's expected for a badge, i.e. extern app url.
       const samePage =
               externAppUrl.origin === testedUrl.origin &&
               externAppUrl.pathname === testedUrl.pathname;

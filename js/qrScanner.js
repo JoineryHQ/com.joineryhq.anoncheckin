@@ -1,11 +1,22 @@
 window.anoncheckinAppCallbacks = {
   urlIsValid: function urlIsValid(url, e) {
+
+    console.log('validateQr', url);
+
     var paramName = $(e.currentTarget).data('scanType');
 
     const currentPageUrl = new URL(window.location.href);
-    const testedUrl = new URL(url);
+    var testedUrl;
 
-    // (a) compare origin + pathname (ignore query + hash)
+    try {
+      testedUrl = new URL(url);
+    } catch (_) {
+      // If we're here, qrData is not a valid URL, so clearly this is not valid
+      // data for us.
+      return false;
+    }
+
+    // (a) ensure baseurl/path is what's expected for a badge, i.e. extern app url.
     const samePage =
             currentPageUrl.origin === testedUrl.origin &&
             currentPageUrl.pathname === testedUrl.pathname;
