@@ -53,17 +53,30 @@ final class CRM_Anoncheckin_Upgrader extends \CRM_Extension_Upgrader_Base {
   // }
 
   /**
-   * Example: Run a couple simple queries.
+   * Add column device.expires
    *
    * @return TRUE on success
    * @throws CRM_Core_Exception
    */
-  // public function upgrade_4200(): bool {
-  //   $this->ctx->log->info('Applying update 4200');
-  //   CRM_Core_DAO::executeQuery('UPDATE foo SET bar = "whiz"');
-  //   CRM_Core_DAO::executeQuery('DELETE FROM bang WHERE willy = wonka(2)');
-  //   return TRUE;
-  // }
+   public function upgrade_4200(): bool {
+     $this->ctx->log->info('Add column device.expires');
+     // Create expires column, back-filling existing rows to '0'.
+     // This effectively expires all existing devices.
+    CRM_Core_DAO::executeQuery("
+      ALTER TABLE `civicrm_anoncheckin_device`
+        ADD COLUMN `expires` BIGINT UNSIGNED NOT NULL
+        DEFAULT '0'
+        COMMENT 'Unix timestamp at which this device expires.'
+    ");
+     // Modify the column so that `expires` must be provided.
+    CRM_Core_DAO::executeQuery("
+      ALTER TABLE `civicrm_anoncheckin_device`
+        MODIFY COLUMN `expires` BIGINT UNSIGNED NOT NULL
+        COMMENT 'Unix timestamp at which this device expires.'
+    ");
+
+     return TRUE;
+   }
 
   /**
    * Example: Run an external SQL script.

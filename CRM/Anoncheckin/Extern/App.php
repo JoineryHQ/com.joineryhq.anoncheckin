@@ -44,6 +44,10 @@ class CRM_Anoncheckin_Extern_App {
       // Either way, we need to (re-)initialize this device.
       $this->device = CRM_Anoncheckin_Utils_Extern::initializeDevice();      
     }
+    else {
+      // We have a device; update the cookie.
+      CRM_Anoncheckin_Utils_Extern::setUserDeviceKey($this->device['deviceKey']);
+    }
 
     if ($this->device['participantId'] ?? FALSE) {
       $this->participant = CRM_Anoncheckin_Utils_ExternData::cacheSelect('selectParticipantInfo', $this->device['participantId']);

@@ -30,14 +30,19 @@ class CRM_Anoncheckin_Utils_Extern {
   }
 
   /**
-   * Set the current device token cookie.
+   * Set the current device token cookie and update _device.expires in DB.
    */
-  public static function setUserDeviceKey(string $deviceId): void {
+  public static function setUserDeviceKey(string $deviceKey): void {
+    // Get device expiry as unix timestamp.
+    $deviceExpiresTimestamp = CRM_Anoncheckin_Utils_Device::calculateExpiresTimestamp();
+    // Set cookie to expire 24 hours after device expiry.
+    // This ensures cookies have a healthy margin of survival so as not to expire before device.
+    $cookieExpiresTimestamp= $deviceExpiresTimestamp + (24 * 60 * 60);
     setcookie(
       'anoncheckin_device',
-      $deviceId,
+      $deviceKey,
       [
-        'expires' => time() + (86400 * 2), // 30 days
+        'expires' => $cookieExpiresTimestamp,
         'path' => '/',
         'secure' => TRUE,
         'httponly' => TRUE,
@@ -46,7 +51,10 @@ class CRM_Anoncheckin_Utils_Extern {
     );
 
     // Make available immediately during this request.
-    $_COOKIE['anoncheckin_device'] = $deviceId;
+    $_COOKIE['anoncheckin_device'] = $deviceKey;
+
+    // extend device expiry in the database (assuming device not already expired)
+    CRM_Anoncheckin_Utils_ExternData::extendDeviceExpires($deviceKey);
   }
 
   /**

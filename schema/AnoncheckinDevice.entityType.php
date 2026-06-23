@@ -59,6 +59,13 @@ return [
         'key_column' => 'value',
       ],
     ],
+    'expires' => [
+      'title' => E::ts('Expires'),
+      'sql_type' => 'bigint unsigned',
+      'required' => TRUE,
+      'input_type' => 'Number',
+      'description' => E::ts('Unix timestamp at which this device expires.'),
+    ],
   ],
   'getIndices' => fn() => [
     'index_device_key' => [
