@@ -53,26 +53,37 @@ final class CRM_Anoncheckin_Upgrader extends \CRM_Extension_Upgrader_Base {
   // }
 
   /**
-   * Add column device.expires
+   * Add column device.expires, correct device.participant_id type, add index.
    *
    * @return TRUE on success
    * @throws CRM_Core_Exception
    */
    public function upgrade_4200(): bool {
-     $this->ctx->log->info('Add column device.expires');
-     // Create expires column, back-filling existing rows to '0'.
-     // This effectively expires all existing devices.
+    $this->ctx->log->info('Add column device.expires');
+    // Create expires column, back-filling existing rows to '0'.
+    // This effectively expires all existing devices.
     CRM_Core_DAO::executeQuery("
       ALTER TABLE `civicrm_anoncheckin_device`
         ADD COLUMN `expires` BIGINT UNSIGNED NOT NULL
         DEFAULT '0'
         COMMENT 'Unix timestamp at which this device expires.'
     ");
-     // Modify the column so that `expires` must be provided.
+    // Modify the column so that `expires` must be provided.
     CRM_Core_DAO::executeQuery("
       ALTER TABLE `civicrm_anoncheckin_device`
         MODIFY COLUMN `expires` BIGINT UNSIGNED NOT NULL
         COMMENT 'Unix timestamp at which this device expires.'
+    ");
+    // Participant column: Correct data type, add index.
+    CRM_Core_DAO::executeQuery("
+      ALTER TABLE civicrm_anoncheckin_device
+        MODIFY participant_id int(10) unsigned DEFAULT NULL COMMENT 'Soft FK to participant.id: device locked to this participant.',
+        ADD INDEX index_participant_id (participant_id);
+    ");
+    // Drop unneeded index on status_id
+    CRM_Core_DAO::executeQuery("
+      ALTER TABLE `civicrm_anoncheckin_device`
+      DROP INDEX `index_device_status_id`;
     ");
 
      return TRUE;

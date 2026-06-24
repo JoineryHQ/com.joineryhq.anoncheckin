@@ -23,9 +23,9 @@ return [
     ],
     'participant_id' => [
       'title' => E::ts('Participant ID'),
-      'sql_type' => 'varchar(255)',
+      'sql_type' => 'int unsigned',
       'input_type' => 'Text',
-      'description' => E::ts('Unique string key for each device'),
+      'description' => E::ts('Soft FK to participant.id: device locked to this participant.'),
     ],
     'device_key' => [
       'title' => E::ts('Device Key'),
@@ -72,8 +72,8 @@ return [
       'fields' => ['device_key' => TRUE],
       'unique' => TRUE,
     ],    
-    'index_device_status_id' => [
-      'fields' => ['device_status_id' => TRUE],
+    'index_participant_id' => [
+      'fields' => ['participant_id' => TRUE],
     ],
   ],
   'getPaths' => fn() => [],
