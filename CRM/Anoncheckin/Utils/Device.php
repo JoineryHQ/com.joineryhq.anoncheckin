@@ -129,6 +129,15 @@ class CRM_Anoncheckin_Utils_Device {
     return $ret;
   }
   
+  /**
+   * Record a log entry for the given device.
+   *
+   * @param int $eventTypeId One of CRM_Anoncheckin_Utils_Extern::DEVICE_LOG_TYPE_*
+   * @param string $logMessage The human-readable log message.
+   * @param int $deviceId       Device identifier -- required if $deviceKey not given.
+   * @param string $deviceKey   Device identifier -- required if $deviceId not given.
+   * @return void
+   */
   public static function createDeviceLogEntry(int $eventTypeId, string $logMessage, int $deviceId = NULL, string $deviceKey = NULL): void {
     if (!$deviceId) {
       $device = \Civi\Api4\AnoncheckinDevice::get()
@@ -154,4 +163,5 @@ class CRM_Anoncheckin_Utils_Device {
       ->setValues($deviceLogValues)
       ->execute();
   }
+
 }
