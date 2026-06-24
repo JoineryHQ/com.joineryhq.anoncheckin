@@ -197,7 +197,7 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff extends CRM_Core_Form {
         // No device found.
         CRM_Core_Session::setStatus('The scanned device does not provide valid data. Try reloading Staff Info on the participant\'s device.', 'Invalid device', 'error no-popup');
       }
-      elseif(!$this->_deviceStatusIsAllowed($device)) {
+      elseif($this->_deviceStatusIsAllowed($device)) {
         // Device found, and status is allowed for this action.
         $this->_validatedValues['deviceKey'] = $deviceKey;
         $this->_userVars['device'] = [
