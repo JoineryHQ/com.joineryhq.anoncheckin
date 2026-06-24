@@ -12,9 +12,6 @@ class CRM_Anoncheckin_Utils_Device {
   const DEVICE_STATUS_LOCKED = 2;
   const DEVICE_STATUS_INVALIDATED = 3;
   const DEVICE_STATUS_CLOSED = 4;
-  
-  // Device expiry is 48 hours (48 * 60 = 2880);
-  const DEVICE_EXPIRY_DELAY_MINUTES = 2880;
 
   public static function createDevice() : array {
     $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
@@ -28,7 +25,8 @@ class CRM_Anoncheckin_Utils_Device {
   }
   
   public static function calculateExpiresTimestamp(): int {
-    return strtotime('+' . self::DEVICE_EXPIRY_DELAY_MINUTES . ' minutes');
+    $deviceMaxAgeMinutes = CRM_Anoncheckin_Setting::singleton()->get('anoncheckin_device_max_age_minutes');
+    return strtotime('+' . $deviceMaxAgeMinutes . ' minutes');
   }
 
   /**

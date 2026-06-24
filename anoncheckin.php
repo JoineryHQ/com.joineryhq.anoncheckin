@@ -8,9 +8,24 @@ require_once 'anoncheckin.civix.php';
 use CRM_Anoncheckin_ExtensionUtil as E;
 
 /**
- * Implements hook_civicrm_check().
+ * Implements hook_civicrm_buildForm().
  *
- * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_check/
+ * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_buildForm/
+ *
+ */
+function anoncheckin_civicrm_buildForm($formName, &$form) {
+  if ($formName == 'CRM_Admin_Form_Generic') {
+    if ($form->getSettingPageFilter() == 'anoncheckin') {
+      // Add our javascript for this form.
+      CRM_Core_Resources::singleton()->addScriptFile(E::LONG_NAME, 'js/CRM_Admin_Form_Generic-anoncheckin.js');
+    }
+  }
+}
+
+/**
+ * Implements hook_civicrm_postProcess().
+ *
+ * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_postProcess/
  *
  */
 function anoncheckin_civicrm_postProcess($formName, &$form) {

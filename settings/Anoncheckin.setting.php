@@ -8,6 +8,17 @@ return [
     'type' => 'String',
     // No other metadata, as this should be omitted from settings forms.
   ],
+  'anoncheckin_device_max_age_minutes' => [
+    'name' => 'anoncheckin_device_max_age_minutes',
+    'type' => 'Integer',
+    'title' => E::ts('Device idle timeout (minutes)'),
+    'description' => E::ts('If a device is unused for longer than this many minutes, the participant must re-scan their badge QR code.'),
+    'default' => 2880,
+    'html_type' => 'Text',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'settings_pages' => ['anoncheckin' => ['weight' => 5]],
+  ],
   'anoncheckin_limit_checkin_by_time' => [
     'name' => 'anoncheckin_limit_checkin_by_time',
     'type' => 'Boolean',
