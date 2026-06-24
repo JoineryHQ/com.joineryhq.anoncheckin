@@ -303,6 +303,13 @@ class CRM_Anoncheckin_Utils_ExternData {
     return $ret;
   }
 
+  /**
+   * Get details for a device which is locked to the given participant ID, ignoring
+   * expired devices.
+   *
+   * @param string $pid
+   * @return array|null
+   */
   public static function selectLockedDeviceByPid(string $pid): ?array {
 
     $sql = "
@@ -310,6 +317,7 @@ class CRM_Anoncheckin_Utils_ExternData {
       FROM civicrm_anoncheckin_device
       WHERE participant_id = %1
         AND device_status_id = %2
+        AND expires > unix_timestamp()
     ";
 
     $params = [
