@@ -37,7 +37,7 @@ class CRM_Anoncheckin_Utils_Extern {
     $deviceExpiresTimestamp = CRM_Anoncheckin_Utils_Device::calculateExpiresTimestamp();
     // Set cookie to expire 24 hours after device expiry.
     // This ensures cookies have a healthy margin of survival so as not to expire before device.
-    $cookieExpiresTimestamp= $deviceExpiresTimestamp + (24 * 60 * 60);
+    $cookieExpiresTimestamp = $deviceExpiresTimestamp + (24 * 60 * 60);
     setcookie(
       'anoncheckin_device',
       $deviceKey,

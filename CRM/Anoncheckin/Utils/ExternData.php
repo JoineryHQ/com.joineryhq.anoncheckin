@@ -140,13 +140,11 @@ class CRM_Anoncheckin_Utils_ExternData {
       UPDATE civicrm_anoncheckin_device
       SET expires = %1
       WHERE device_key = %2
-        AND device_status_id != %3
         AND expires > unix_timestamp()
     ";
     $params = [
       1 => [$expiresTimestamp, 'Integer'],
       2 => [$deviceKey, 'String'],
-      3 => [CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_EXPIRED, 'Integer'],
     ];
     $dao = CRM_Core_DAO::executeQuery($query, $params);
   }
@@ -274,7 +272,7 @@ class CRM_Anoncheckin_Utils_ExternData {
 
   /**
    * Get all properties of a device for a given deviceKey (ignoring any devices
-   * with status='closed', or status='expired', or expires <= now)
+   * with status='closed' or expires <= now)
    *
    * @param string $deviceKey
    * @return array|null If device found, an array of device properties; otherwise null.
@@ -285,14 +283,13 @@ class CRM_Anoncheckin_Utils_ExternData {
       SELECT d.id as device_id, d.*
       FROM civicrm_anoncheckin_device d
       WHERE d.device_key = %1
-        AND d.device_status_id NOT IN (%2, %3)
+        AND d.device_status_id != %2
         AND d.expires > unix_timestamp()
     ";
 
     $params = [
       1 => [$deviceKey, 'String'],
       2 => [CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_CLOSED, 'Integer'],
-      3 => [CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_EXPIRED, 'Integer'],
     ];
 
     $dao = CRM_Core_DAO::executeQuery($sql, $params);

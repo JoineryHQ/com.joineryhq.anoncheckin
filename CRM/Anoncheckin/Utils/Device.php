@@ -12,10 +12,6 @@ class CRM_Anoncheckin_Utils_Device {
   const DEVICE_STATUS_LOCKED = 2;
   const DEVICE_STATUS_INVALIDATED = 3;
   const DEVICE_STATUS_CLOSED = 4;
-  // Note that status 'expired' is short-hand for "device.expires is in the past,
-  // and some process has updated device.device_status_id accordingly. Thus it's
-  // slightly redundant to device.expires.
-  const DEVICE_STATUS_EXPIRED = 5;
   
   // Device expiry is 48 hours (48 * 60 = 2880);
   const DEVICE_EXPIRY_DELAY_MINUTES = 2880;
