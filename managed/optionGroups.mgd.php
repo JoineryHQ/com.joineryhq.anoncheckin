@@ -103,6 +103,26 @@ return [
     ],
   ],
 
+  // expired
+  [
+    'name' => 'OptionValue_anoncheckin_device_status_expired',
+    'entity' => 'OptionValue',
+    'params' => [
+      'version' => 4,
+      'values' => [
+        'option_group_id.name' => 'anoncheckin_device_status',
+        'label' => E::ts('Expired'),
+        'name' => 'expired',
+        'value' => 5,
+        'weight' => 5,
+        'is_active' => TRUE,
+        'is_reserved' => TRUE,
+        'cleanup' => 'always',
+        'update' => 'always',
+      ],
+    ],
+  ],
+
   // Option Group: Anoncheckin Session Status
   [
     'name' => 'OptionGroup_anoncheckin_session_status',
