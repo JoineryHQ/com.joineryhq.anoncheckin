@@ -141,3 +141,18 @@ function anoncheckin_civicrm_alterBarcode(&$data, $type, $context) {
     $data['current_value'] = CRM_Anoncheckin_Utils_Extern::getAppUrl() . '?' . http_build_query($q);
   }
 }
+
+function anoncheckin_civicrm_alterBadge($labelName, &$label, &$format, &$participant) {
+  $fooValue = '<a href="#">foo</a>';
+  foreach($format['token'] as &$rowToken) {
+    if($rowToken['token'] == '{contact.anoncheckinfoo}') {
+      $rowToken['value'] = $fooValue;
+      $w = $h = 25;
+      $label->printImage('https://api.qrserver.com/v1/create-qr-code/?data=https%3A%2F%2Ffppta.l%2Fc%3Fp%3D20747.8zap3yVdF17Z_I2k', NULL, NULL, ($w ?? NULL),
+        ($h ?? NULL));
+
+      break;
+    }
+  }
+  $participant['anoncheckinfoo'] = $fooValue;
+}
