@@ -20,12 +20,12 @@ class CRM_Anoncheckin_Extern_App {
   var $_session;
 
   public function __construct() {
-    // validate all input (value vs hmac sig).
-    $this->validateInput();
-
     // Create context for app session vars.
     $this->_session = CRM_Core_Session::singleton();
     $this->_session->createScope(self::SESSION_PREFIX);
+
+    // validate all input (value vs hmac sig).
+    $this->validateInput();
 
     $this->appUrl = CRM_Anoncheckin_Utils_Extern::getAppUrl();
     $setting = CRM_Anoncheckin_Setting::singleton();

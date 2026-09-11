@@ -10,8 +10,9 @@ class CRM_Anoncheckin_Utils_Value {
     if (empty($value) || empty($sig)) {
       return false;
     }
+    $expected = self::generateSignature($value);
     return hash_equals(
-      self::generateSignature($value),
+      $expected,
       $sig
     );
   }
