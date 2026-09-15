@@ -1,0 +1,50 @@
+<?php
+
+class CRM_Anoncheckin_Utils_Settings {
+  
+  public static function get($name) {
+    if (method_exists(static::class, 'get_' . $name)) {
+      return call_user_func_array([static::class, 'get_' . $name], [$name]);
+    }
+    return \Civi::settings()->get($name);
+  }
+
+  public static function set($name, $value) {
+    if (method_exists(static::class, 'set_' . $name)) {
+      call_user_func_array([static::class, 'set_' . $name], [$value]);
+    }
+    else {
+      \Civi::settings()->set($name, $value);
+    }
+  }
+
+  public static function getBadgeLayoutHasQrCode(int $badgeLayoutId) {
+    return in_array($badgeLayoutId, self::get_anoncheckin_qr_badge_layouts());
+  }
+
+  public static function setBadgeLayoutHasQrCode(int $badgeLayoutId, $bool) {
+    $badgeLayoutIds = self::get_anoncheckin_qr_badge_layouts();
+    if ($bool) {
+      $badgeLayoutIds[] = $badgeLayoutId;
+    }
+    else {
+      $badgeLayoutIds = array_diff($badgeLayoutIds, [$badgeLayoutId]);
+    }
+    self::set_anoncheckin_qr_badge_layouts($badgeLayoutIds);
+  }
+
+  private static function get_anoncheckin_qr_badge_layouts() {
+    $ret = [];
+    $value = \Civi::settings()->get('anoncheckin_qr_badge_layouts');
+    if (!empty($value)) {
+      $ret = explode(',', $value);
+    }
+    return $ret;
+  }
+
+  private static function set_anoncheckin_qr_badge_layouts(array $value) {
+    \Civi::settings()->set('anoncheckin_qr_badge_layouts', implode(',', array_unique($value)));
+  }
+  
+  
+}

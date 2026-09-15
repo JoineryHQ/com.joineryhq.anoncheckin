@@ -10,12 +10,12 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
 
     $sessions = [];
     $query = "
-      select s.id, s.title 
-      from civicrm_anoncheckin_session s 
+      select s.id, s.title
+      from civicrm_anoncheckin_session s
         inner join civicrm_anoncheckin_session_group sg on sg.id = s.session_group_id
       where
         sg.event_id = %1
-      order by 
+      order by
         sg.start_datetime_utc, s.title
     ";
     $queryParams = [
@@ -25,22 +25,22 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
     while ($dao->fetch()) {
       $sessions[$dao->id] = $dao->title;
     }
-    
+
     $badgeQrColor = '0B3D91';
     $sessionQrColor = '1B5E20';
 
     $indivUrls = [];
     $query = "
-      select p.id as pid, 
+      select p.id as pid,
         e.title as event_title,
-        p.contact_id as cid, 
-        c.display_name 
-      from civicrm_participant p 
-        inner join civicrm_contact c on c.id = p.contact_id 
+        p.contact_id as cid,
+        c.display_name
+      from civicrm_participant p
+        inner join civicrm_contact c on c.id = p.contact_id
         inner join civicrm_event e on e.id = p.event_id
-      where p.event_id = %1 
-        and c.contact_type = 'individual' 
-        and c.id > 500 
+      where p.event_id = %1
+        and c.contact_type = 'individual'
+        and c.id > 500
       limit 2
     ";
     $queryParams = [
@@ -58,21 +58,21 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
       $indivUrls[] = [
         'title' => "$displayName at \"{$eventTitle}\" ($pid)",
         'app' => $indivAppUrl,
-        'qr'  => CRM_Anoncheckin_Utils_Qr::getQrImageUrl($indivAppUrl, $badgeQrColor)
+        'qr'  => CRM_Anoncheckin_Utils_Qr::getQrImageUrl($indivAppUrl, $badgeQrColor, NULL, TRUE, "p={$pid}"),
       ];
     }
 
     $query = "
-      select p.id as pid, 
+      select p.id as pid,
         e.title as event_title,
-        p.contact_id as cid, 
-        c.display_name 
-      from civicrm_participant p 
-        inner join civicrm_contact c on c.id = p.contact_id 
+        p.contact_id as cid,
+        c.display_name
+      from civicrm_participant p
+        inner join civicrm_contact c on c.id = p.contact_id
         inner join civicrm_event e on e.id = p.event_id
-      where p.event_id != %1 
-        and c.contact_type = 'individual' 
-        and c.id > 500 
+      where p.event_id != %1
+        and c.contact_type = 'individual'
+        and c.id > 500
       limit 1
     ";
     $queryParams = [
@@ -90,10 +90,10 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
       $indivUrls[] = [
         'title' => "$displayName at \"{$eventTitle}\" ($pid)",
         'app' => $indivAppUrl,
-        'qr'  => CRM_Anoncheckin_Utils_Qr::getQrImageUrl($indivAppUrl, 'ff0000')
+        'qr'  => CRM_Anoncheckin_Utils_Qr::getQrImageUrl($indivAppUrl, 'ff0000', NULL, TRUE, "p={$pid}"),
       ];
     }
-    
+
     // One non-existent participant
     $pid = -1;
     $displayName = 'Non-existent participant';
@@ -102,7 +102,7 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
     $indivUrls[] = [
       'title' => "$displayName at \"{$eventTitle}\" ($pid)",
       'app' => $indivAppUrl,
-      'qr'  => CRM_Anoncheckin_Utils_Qr::getQrImageUrl($indivAppUrl, '000000')
+      'qr'  => CRM_Anoncheckin_Utils_Qr::getQrImageUrl($indivAppUrl, '000000', NULL, TRUE, "p={$pid}"),
     ];
 
     $this->assign('indivUrls', $indivUrls);
@@ -113,13 +113,12 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
       $sessionUrls[] = [
         'title' => $sessionTitle,
         'app' => $appUrl,
-        'qr'  => CRM_Anoncheckin_Utils_Qr::getQrImageUrl($appUrl, $sessionQrColor)
+        'qr'  => CRM_Anoncheckin_Utils_Qr::getQrImageUrl($appUrl, $sessionQrColor, NULL, TRUE, "s={$sessionId}"),
       ];
     }
     $this->assign('sessionUrls', $sessionUrls);
     parent::run();
   }
-
 
   private function getAppUrl($params = []) {
     $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
@@ -131,9 +130,9 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
     else {
       $url = $base;
     }
-    
+
     return $url;
-    
+
   }
 
 }

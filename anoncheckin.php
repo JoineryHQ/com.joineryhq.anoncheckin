@@ -20,6 +20,28 @@ function anoncheckin_civicrm_buildForm($formName, &$form) {
       CRM_Core_Resources::singleton()->addScriptFile(E::LONG_NAME, 'js/CRM_Admin_Form_Generic-anoncheckin.js');
     }
   }
+  elseif ($formName == 'CRM_Badge_Form_Layout') {
+    $form->addElement('checkbox', 'is_anoncheckinqr', E::ts('Display QR code for Anonymous QR session check-in?'));
+    // Assign bhfe fields to the template, so our new field has a place to live.
+    $tpl = CRM_Core_Smarty::singleton();
+    $bhfe = $tpl->getTemplateVars('beginHookFormElements');
+    if (!$bhfe) {
+      $bhfe = array();
+    }
+    $bhfe[] = 'is_anoncheckinqr';
+    $form->assign('beginHookFormElements', $bhfe);
+
+    // Add javascript that will relocate our field to a sensible place in the form.
+    CRM_Core_Resources::singleton()->addScriptFile('com.joineryhq.anoncheckin', 'js/CRM_Badge_Form_Layout.js');
+
+    // Set defaults so our field has the right value.
+    $badgeLayoutId = (int) $form->getVar('_id');
+    $defaults = [
+      'is_anoncheckinqr' => CRM_Anoncheckin_Utils_Settings::getBadgeLayoutHasQrCode($badgeLayoutId),
+    ];
+    $form->setDefaults($defaults);
+
+  }
 }
 
 /**
@@ -31,7 +53,7 @@ function anoncheckin_civicrm_buildForm($formName, &$form) {
 function anoncheckin_civicrm_postProcess($formName, &$form) {
   if ($formName == 'CRM_Admin_Form_Generic') {
     if ($form->getSettingPageFilter() == 'anoncheckin') {
-      // This fires after the form has saved changes to settings. 
+      // This fires after the form has saved changes to settings.
       // Rebuild cached config.
       // TODO: This doesn't address settings changes via api or other mechanisms
       // and as of this writing, we have no mechanism to do so.
@@ -42,6 +64,12 @@ function anoncheckin_civicrm_postProcess($formName, &$form) {
         CRM_Core_Session::setStatus('Could not update extension cached config.', 'Error', 'error');
       }
     }
+  }
+  elseif ($formName == 'CRM_Badge_Form_Layout') {
+    $values = $form->getSubmitValues();
+    $isAnoncheckinQr = (bool) $values['is_anoncheckinqr'];
+    $badgeLayoutId = $form->getVar('_id');
+    CRM_Anoncheckin_Utils_Settings::setBadgeLayoutHasQrCode($badgeLayoutId, $isAnoncheckinQr);
   }
 }
 
@@ -115,29 +143,86 @@ function anoncheckin_civicrm_navigationMenu(&$menu) {
   }
 }
 
-/**
- * Implements hook_civicrm_alterBarcode().
- *
- * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_alterBarcode
- */
-function anoncheckin_civicrm_alterBarcode(&$data, $type, $context) {
-  if (
-    $type != 'qrcode'
-    || $context != 'name_badge'
-  ) {
-    // We only operate on name badge qr codes.
-    return;
+function anoncheckin_civicrm_alterBadge($labelName, CRM_Badge_BAO_Badge &$label, &$format, &$participant) {
+  $badgeLayoutId = (int) ($format['labelId'] ?? NULL);
+  if (CRM_Anoncheckin_Utils_Settings::getBadgeLayoutHasQrCode($badgeLayoutId)) {
+    // Get participant ID.
+    $pid = $participant['participant_id'];
+
+    // Generate app query params for pid.
+    $queryParams = ['p' => $pid, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)];
+
+    // Create the app url for this badge.
+    $qrData = CRM_Anoncheckin_Utils_Extern::getAppUrl() . '?' . http_build_query($queryParams);
+
+    // Our QR image file measurements; TODO: these should be user-editable settings:
+    // Units are milimeters because that's hardcoded in CiviCRM's core badge-
+    // generation code -- reference: CRM_Badge_BAO_Badge::createLabels()
+    // QR code image is a square; this is the length (in milimmeters) of one side.
+    $qrSideLength = CRM_Anoncheckin_Utils_Settings::get('anoncheckin_badge_qr_size');
+    // Distance (in milimeters) between the bottom of the badge and the bottom
+    // of the QR code image.
+    $qrBottomPadding = CRM_Anoncheckin_Utils_Settings::get('anoncheckin_badge_qr_min_margin');
+
+    // Calculation of QR image side length (in pixels) based on 300-dpi and
+    // QR side length in milimeters.
+    $qrSizePixels = ($qrSideLength * 12);
+
+    // Create (or get from cache) the URL of the QR code image.
+    // Rationale: creating qr codes in our way is server-intensive. So we cache
+    // them as actual deterministically-named image files. Then we can just
+    // re-use them as needed.
+    $qrImageUrl = CRM_Anoncheckin_Utils_Qr::getQrImageUrl($qrData, 'black', $qrSizePixels, TRUE, "p={$pid}");
+
+    // Values from the $label object, which we'll need for proper placement.
+    // Height (in mm) of a single label.
+    $labelHeight = $label->pdf->height;
+    // Width (in mm) of a single label.
+    $labelWidth = $label->pdf->width;
+    // Count (zero-based) of the horizontal (column) position of the current badge.
+    // (First column is 0, second is 1, etc.)
+    $labelCountX = $label->pdf->countX;
+    // Count (zero-based) of the vertical (row) position of the current badge.
+    // (First row is 0, second is 1, etc.)
+    $labelCountY = $label->pdf->countY;
+    // Width (in mm) of column gutters (spaces between columns)
+    $labelXSpace = $label->pdf->xSpace;
+    // Height (in mm) of row gutters (spaces between rows)
+    $labelYSpace = $label->pdf->ySpace;
+
+    // Calculation of total column gutter space preceding the current badge.
+    // (This is, BTW "0" in the first row, as it should be.)
+    $labelXSpaces = ($labelCountX * $labelXSpace);
+    // Calculation of total column gutter space preceding the current badge.
+    // (This is, BTW "0" in the first column, as it should be.)
+    $labelYSpaces = ($labelCountY ? ($labelCountY * $labelYSpace) : 0);
+
+    // Calculation of the X placement of our QR code image.
+    // This is:
+    //    Page left margin;
+    //    plus: Total width of all badges in this row, including the current badge;
+    //    plus: Total column gutter space preceding the current badge;
+    //    minus: half of one label width;
+    //    minus: half of one QR image width.
+    $qrX = $label->pdf->marginLeft + (($labelCountX + 1) * $labelWidth) + $labelXSpaces - ($labelWidth / 2) - ($qrSideLength / 2);
+    // Calculation of the Y placement of our QR code image.
+    // This is:
+    //    Page top margin;
+    //    plus: Total height of all badges in this row, including the current badge;
+    //    plus: Total row gutter space preceding the current badge;
+    //    minus: QR image height;
+    //    minus: our bottom padding.
+    $qrY = $label->pdf->marginTop + (($labelCountY + 1) * $labelHeight) + $labelYSpaces - $qrSideLength - $qrBottomPadding;
+
+    // printImage (below) will increment x and y, but we actually don't want that;
+    // We want to print our QR code wherever we decide, without regard to (and
+    // without affecting) the position of other elements. So we'll store the
+    // current x and y values now, and then after printImage(), we'll reset
+    // x and y to those values.
+    $origX = $label->pdf->GetAbsX();
+    $origY = $label->pdf->GetY();
+    $label->printImage($qrImageUrl, $qrX, $qrY, $qrSideLength, $qrSideLength);
+    $label->pdf->SetXY($origX, $origY);
   }
-  $participant = \Civi\Api4\Participant::get()
-    ->addSelect('event_id')
-    ->addWhere('id', '=', $data['participant_id'])
-    ->execute()
-    ->first();
-  // If there are anoncheckin sessions for this event, we will simply replace the qr code 
-  // destination
-  if (CRM_Anoncheckin_Utils_Session::eventHasSessions((int)$participant['event_id'])) {
-    $pid = $data['participant_id'];
-    $q = ['p' => $pid, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)];
-    $data['current_value'] = CRM_Anoncheckin_Utils_Extern::getAppUrl() . '?' . http_build_query($q);
-  }
+
 }
