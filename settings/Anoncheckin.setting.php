@@ -8,6 +8,11 @@ return [
     'type' => 'String',
     // No other metadata, as this should be omitted from settings forms.
   ],
+  'anoncheckin_qr_badge_layouts' => [
+    'name' => 'anoncheckin_qr_badge_layouts',
+    'type' => 'String',
+    // No other metadata, as this should be omitted from settings forms.
+  ],
   'anoncheckin_device_max_age_minutes' => [
     'name' => 'anoncheckin_device_max_age_minutes',
     'type' => 'Integer',
@@ -41,6 +46,28 @@ return [
     'is_contact' => 0,
     'settings_pages' => ['anoncheckin' => ['weight' => 20]],
   ],
+  'anoncheckin_badge_qr_size' => [
+    'name' => 'anoncheckin_badge_qr_size',
+    'type' => 'Integer',
+    'title' => E::ts('Height/width (in milimeters) of badge QR code'),
+    'description' => E::ts('(Badge QR codes are square, so height and width are equal.)'),
+    'default' => 30,
+    'html_type' => 'Text',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'settings_pages' => ['anoncheckin' => ['weight' => 30]],
+  ],
+  'anoncheckin_badge_qr_min_margin' => [
+    'name' => 'anoncheckin_badge_qr_min_margin',
+    'type' => 'Integer',
+    'title' => E::ts('Minimum distance (in milimeters) between edge of badge and QR code'),
+    'description' => '',
+    'default' => 17,
+    'html_type' => 'Text',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'settings_pages' => ['anoncheckin' => ['weight' => 40]],
+  ],
   'anoncheckin_debug' => [
     'name' => 'anoncheckin_debug',
     'type' => 'Boolean',
@@ -50,6 +77,6 @@ return [
     'html_type' => 'Toggle',
     'is_domain' => 1,
     'is_contact' => 0,
-    'settings_pages' => ['anoncheckin' => ['weight' => 30]],
+    'settings_pages' => ['anoncheckin' => ['weight' => 100]],
   ],
 ];
