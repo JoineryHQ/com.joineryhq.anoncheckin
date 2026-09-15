@@ -16,21 +16,12 @@ class Token extends AutoSubscriber {
 
   public function list(TokenRegisterEvent $e) {
     $e->entity('contact')
-      ->register('anoncheckinfoo', ts('Anoncheckin foo'));
+      ->register('anoncheckinqr', ts('Anoncheckin QR code (name badges only)'));
   }
 
   public function eval(TokenValueEvent $e): void {
+    // This token returns nothing. It's used only in hook_civicrm_alterBadge().
     return;
-
-    foreach ($e->getRows() as $row) {
-      $rowContext = $row->tokenProcessor->rowContexts[$row->tokenRow];
-      /* @var TokenRow $row */
-      $row->format('text/plain');
-      if($cid = $rowContext['contactId']) {
-//        $row->tokens('contact', 'anoncheckinfoo', "this is foo: $cid");
-//        $row->tokens('participant', 'anoncheckinfoo', "this is foo: $cid");
-      }
-    }    
   }
 
 }
