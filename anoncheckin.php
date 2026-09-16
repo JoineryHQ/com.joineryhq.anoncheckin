@@ -144,85 +144,140 @@ function anoncheckin_civicrm_navigationMenu(&$menu) {
 }
 
 function anoncheckin_civicrm_alterBadge($labelName, CRM_Badge_BAO_Badge &$label, &$format, &$participant) {
-  $badgeLayoutId = (int) ($format['labelId'] ?? NULL);
-  if (CRM_Anoncheckin_Utils_Settings::getBadgeLayoutHasQrCode($badgeLayoutId)) {
-    // Get participant ID.
-    $pid = $participant['participant_id'];
+  // Static vars to avoid needless repeated calculation (since this hook fires once per badge).
+  static $badgeLayoutHasQrCode;
+  static $staticValues = [];
 
-    // Generate app query params for pid.
-    $queryParams = ['p' => $pid, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)];
+  if (!isset($badgeLayoutHasQrCode)) {
+    $badgeLayoutId = (int) ($format['labelId'] ?? NULL);
+    $badgeLayoutHasQrCode = (bool) CRM_Anoncheckin_Utils_Settings::getBadgeLayoutHasQrCode($badgeLayoutId);
+  }
+  if (!$badgeLayoutHasQrCode) {
+    return;
+  }
 
-    // Create the app url for this badge.
-    $qrData = CRM_Anoncheckin_Utils_Extern::getAppUrl() . '?' . http_build_query($queryParams);
+  // Values from the $label object, which we'll need for proper placement.
+  // Height (in mm) of a single label.
+  $labelHeight = $label->pdf->height;
+  // Width (in mm) of a single label.
+  $labelWidth = $label->pdf->width;
 
-    // Our QR image file measurements; TODO: these should be user-editable settings:
+  if (empty($staticValues)) {
+    // Calculate some values which will be the same for all badges.
+
+    // Our QR image file measurements;
     // Units are milimeters because that's hardcoded in CiviCRM's core badge-
     // generation code -- reference: CRM_Badge_BAO_Badge::createLabels()
     // QR code image is a square; this is the length (in milimmeters) of one side.
     $qrSideLength = CRM_Anoncheckin_Utils_Settings::get('anoncheckin_badge_qr_size');
     // Distance (in milimeters) between the bottom of the badge and the bottom
     // of the QR code image.
-    $qrBottomPadding = CRM_Anoncheckin_Utils_Settings::get('anoncheckin_badge_qr_min_margin');
+    $qrMinMargin = CRM_Anoncheckin_Utils_Settings::get('anoncheckin_badge_qr_min_margin');
 
     // Calculation of QR image side length (in pixels) based on 300-dpi and
     // QR side length in milimeters.
     $qrSizePixels = ($qrSideLength * 12);
 
-    // Create (or get from cache) the URL of the QR code image.
-    // Rationale: creating qr codes in our way is server-intensive. So we cache
-    // them as actual deterministically-named image files. Then we can just
-    // re-use them as needed.
-    $qrImageUrl = CRM_Anoncheckin_Utils_Qr::getQrImageUrl($qrData, 'black', $qrSizePixels, TRUE, "p={$pid}");
-
-    // Values from the $label object, which we'll need for proper placement.
-    // Height (in mm) of a single label.
-    $labelHeight = $label->pdf->height;
-    // Width (in mm) of a single label.
-    $labelWidth = $label->pdf->width;
-    // Count (zero-based) of the horizontal (column) position of the current badge.
-    // (First column is 0, second is 1, etc.)
-    $labelCountX = $label->pdf->countX;
-    // Count (zero-based) of the vertical (row) position of the current badge.
-    // (First row is 0, second is 1, etc.)
-    $labelCountY = $label->pdf->countY;
     // Width (in mm) of column gutters (spaces between columns)
     $labelXSpace = $label->pdf->xSpace;
     // Height (in mm) of row gutters (spaces between rows)
     $labelYSpace = $label->pdf->ySpace;
 
-    // Calculation of total column gutter space preceding the current badge.
-    // (This is, BTW "0" in the first row, as it should be.)
-    $labelXSpaces = ($labelCountX * $labelXSpace);
-    // Calculation of total column gutter space preceding the current badge.
-    // (This is, BTW "0" in the first column, as it should be.)
-    $labelYSpaces = ($labelCountY ? ($labelCountY * $labelYSpace) : 0);
+    // Relative x and y position (e.g. 'top/left') per extension settings.
+    $qrPosX = CRM_Anoncheckin_Utils_Settings::get('anoncheckin_badge_qr_pos_x');
+    $qrPosY = CRM_Anoncheckin_Utils_Settings::get('anoncheckin_badge_qr_pos_y');
 
-    // Calculation of the X placement of our QR code image.
-    // This is:
-    //    Page left margin;
-    //    plus: Total width of all badges in this row, including the current badge;
-    //    plus: Total column gutter space preceding the current badge;
-    //    minus: half of one label width;
-    //    minus: half of one QR image width.
-    $qrX = $label->pdf->marginLeft + (($labelCountX + 1) * $labelWidth) + $labelXSpaces - ($labelWidth / 2) - ($qrSideLength / 2);
-    // Calculation of the Y placement of our QR code image.
-    // This is:
-    //    Page top margin;
-    //    plus: Total height of all badges in this row, including the current badge;
-    //    plus: Total row gutter space preceding the current badge;
-    //    minus: QR image height;
-    //    minus: our bottom padding.
-    $qrY = $label->pdf->marginTop + (($labelCountY + 1) * $labelHeight) + $labelYSpaces - $qrSideLength - $qrBottomPadding;
+    // Determine badge-relative x offset for QR code image (per 'x' setting).
+    // This is the mm distance from badge-left-edge to image-left-edge
+    switch ($qrPosX) {
+      case 'left':
+        $qrOffsetX = $qrMinMargin;
+        break;
 
-    // printImage (below) will increment x and y, but we actually don't want that;
-    // We want to print our QR code wherever we decide, without regard to (and
-    // without affecting) the position of other elements. So we'll store the
-    // current x and y values now, and then after printImage(), we'll reset
-    // x and y to those values.
-    $origX = $label->pdf->GetAbsX();
-    $origY = $label->pdf->GetY();
-    $label->printImage($qrImageUrl, $qrX, $qrY, $qrSideLength, $qrSideLength);
-    $label->pdf->SetXY($origX, $origY);
+      case 'center':
+        $qrOffsetX = (($labelWidth / 2) - ($qrSideLength / 2));
+        break;
+
+      case 'right':
+        $qrOffsetX = ($labelWidth - $qrSideLength - $qrMinMargin);
+        break;
+    }
+
+    // Determine badge-relative y offset for QR code image (per 'y' setting).
+    // This is the mm distance from badge-top-edge to image-top-edge.
+    switch ($qrPosY) {
+      case 'top':
+        $qrOffsetY = $qrMinMargin;
+        break;
+
+      case 'center':
+        $qrOffsetY = ($labelHeight / 2) - ($qrSideLength / 2);
+        break;
+
+      case 'bottom':
+        $qrOffsetY = ($labelHeight - $qrSideLength - $qrMinMargin);
+        break;
+    }
+    $staticValues = [
+      'qrSizePixels' => $qrSizePixels,
+      'qrOffsetX' => $qrOffsetX,
+      'qrOffsetY' => $qrOffsetY,
+      'qrSideLength' => $qrSideLength,
+    ];
   }
 
+  // Get participant ID.
+  $pid = $participant['participant_id'];
+
+  // Generate app query params for pid.
+  $queryParams = ['p' => $pid, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)];
+
+  // Create the app url for this badge.
+  $qrData = CRM_Anoncheckin_Utils_Extern::getAppUrl() . '?' . http_build_query($queryParams);
+
+  // Create (or get from cache) the URL of the QR code image.
+  // Rationale: creating qr codes in our way is server-intensive. So we cache
+  // them as actual deterministically-named image files. Then we can just
+  // re-use them as needed.
+  $qrImageUrl = CRM_Anoncheckin_Utils_Qr::getQrImageUrl($qrData, 'black', $staticValues['qrSizePixels'], TRUE, "p={$pid}");
+
+  // Count (zero-based) of the horizontal (column) position of the current badge.
+  // (First column is 0, second is 1, etc.)
+  $labelCountX = $label->pdf->countX;
+  // Count (zero-based) of the vertical (row) position of the current badge.
+  // (First row is 0, second is 1, etc.)
+  $labelCountY = $label->pdf->countY;
+
+  // Calculation of total column gutter space preceding the current badge.
+  // (This is, BTW "0" in the first row, as it should be.)
+  $labelXSpaces = ($labelCountX * $labelXSpace);
+  // Calculation of total column gutter space preceding the current badge.
+  // (This is, BTW "0" in the first column, as it should be.)
+  $labelYSpaces = ($labelCountY ? ($labelCountY * $labelYSpace) : 0);
+
+  // Calculation of the X placement of our QR code image.
+  // This is:
+  //    Page left margin;
+  //    plus: Total width of all preceding badges in this row;
+  //    plus: Total column gutter space preceding the current badge;
+  //    plus: qrOffsetX
+  $qrX = $label->pdf->marginLeft + ($labelCountX * $labelWidth) + $labelXSpaces + $staticValues['qrOffsetX'];
+
+  // Calculation of the Y placement of our QR code image.
+  // This is:
+  //    Page top margin;
+  //    plus: Total height of all preceding badges in this column;
+  //    plus: Total row gutter space preceding the current badge;
+  //    plus: qrOffsetY
+  $qrY = $label->pdf->marginTop + ($labelCountY * $labelHeight) + $labelYSpaces + $staticValues['qrOffsetY'];
+
+  // printImage (below) will increment x and y, but we actually don't want that;
+  // We want to print our QR code wherever we decide, without regard to (and
+  // without affecting) the position of other elements. So we'll store the
+  // current x and y values now, and then after printImage(), we'll reset
+  // x and y to those values.
+  $origX = $label->pdf->GetAbsX();
+  $origY = $label->pdf->GetY();
+  $label->printImage($qrImageUrl, $qrX, $qrY, $staticValues['qrSideLength'], $staticValues['qrSideLength']);
+  $label->pdf->SetXY($origX, $origY);
 }
