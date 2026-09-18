@@ -14,6 +14,11 @@ class CRM_Anoncheckin_Extern_App {
   var $debug = FALSE;
   var $appUrl = '';
   
+  var $cssFiles = [];
+  var $jsFiles = [];
+  var $cssUrls = [];
+  var $jsUrls = [];
+  
   /**
    * @var CRM_Core_session Instance of CRM_Core_Session, to be scoped for our own dedicated usage.
    */
@@ -58,10 +63,16 @@ class CRM_Anoncheckin_Extern_App {
 
   public function run() {
 
-    // Pass all input vers to template.
+    $this->addCssFile('css/Extern/App.css');
+    $this->addCssFile('[civicrm.root]/css/crm-i.css');
+    $this->addCssUrl('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css');
+    $this->addJsUrl('https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js');
+    $this->addJsUrl('https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js');
+
+    // Pass all input vars to template.
     foreach ($_REQUEST as $requestKey => $requestValue) {
       $this->assign($requestKey, $requestValue);
-      $this->setDebugMessage("Set tpl value from REQEST: $requestKey = $requestValue");
+      $this->setDebugMessage("Set tpl value from REQUEST: $requestKey = $requestValue");
     }
     
     $this->assign('appUrl', $this->appUrl);
@@ -376,29 +387,8 @@ class CRM_Anoncheckin_Extern_App {
     $extensionBasePath = $setting->get('extensionBasePath');
     $tpl->assign('extensionBasePath', $extensionBasePath);
 
-    // Embed CSS styles. We will embed CSS as literal code, rather than using 
-    // separate CSS URLs, in order to minimize the number of http requests on
-    // the page.
-    $cssFilePaths = [
-      $extensionBasePath . '/css/qrScanner.css',
-    ];
-    $cssContent = '';
-    foreach ($cssFilePaths as $cssFilePath) {
-      $cssContent .= '<style>' . file_get_contents($cssFilePath). '</style>';
-    }
-    $tpl->assign('cssContent', $cssContent);
-
-    // Embed Javascript. We will embed JS as literal code, rather than using 
-    // separate Script URLs, in order to minimize the number of http requests on
-    // the page.
-    $jsFilePaths = [
-      $extensionBasePath . '/js/qrScanner.js',
-    ];
-    $jsContent = '';
-    foreach ($jsFilePaths as $jsFilePath) {
-      $jsContent .= '<script>' . file_get_contents($jsFilePath). '</script>';
-    }
-    $tpl->assign('jsContent', $jsContent);
+    
+    $this->assignAssets();
 
     $tpl->display($this->getTemplate());
     exit();
@@ -449,6 +439,131 @@ class CRM_Anoncheckin_Extern_App {
     $messages = $this->_session->get('messages', self::SESSION_PREFIX) ?? [];
     $this->_session->set('messages', [], self::SESSION_PREFIX);
     return $messages;
+  }
+  
+  /**
+   * Specify a CSS file to be included
+   * @param string $path Path to css file.
+   *  If begins with [, we assume it's beginning with a civicrm path variable such as [civicrm.root]
+   *  Otherwise, we assume it's relative to 'extensionBasePath' setting.
+   * @param int $weight
+   */
+  protected function addCssFile(string $path, int $weight = 0) {
+    if (substr($path, 0, 1) == '[') {
+      $path = \Civi::paths()->getPath($path);
+    }
+    else {
+      $setting = CRM_Anoncheckin_Setting::singleton();
+      $extensionBasePath = $setting->get('extensionBasePath');
+      $path = "{$extensionBasePath}". DIRECTORY_SEPARATOR . "$path";
+    }
+    $this->cssFiles[] = [
+      'path' => $path,
+      'weight' => $weight,
+    ];
+  }
+  
+  /**
+   * Specify a JS file to be included
+   * @param string $path Path to js file.
+   *  If begins with DIRECTORY_SEPARATOR, we assume it's a full path
+   *  Otherwise, we assume it's relative to 'extensionBasePath' setting.
+   * @param int $weight
+   */
+  protected function addJsFile(string $path, int $weight = 0) {
+    if (substr($path, 0, 1) != DIRECTORY_SEPARATOR) {
+      $setting = CRM_Anoncheckin_Setting::singleton();
+      $extensionBasePath = $setting->get('extensionBasePath');
+      $path = "{$extensionBasePath}". DIRECTORY_SEPARATOR . "$path";
+    }
+    $this->jsFiles[] = [
+      'path' => $path,
+      'weight' => $weight,
+    ];
+  }
+  
+  /**
+   * Specify a CSS url to be included
+   * @param string $url URL to css file. Passed as first parameter to Civi::paths()->getUrl();
+   * @param string $preferFormat 'relative' or 'absolute'. Passed as second parameter to Civi::paths()->getUrl();
+   * @param ssl $ssl NULL to autodetect. TRUE to force to SSL. Passed as third parameter to Civi::paths()->getUrl();
+   * @param int $weight relative order for placement in html <head>
+   */
+  protected function addCssUrl($url, $preferFormat = 'relative', $ssl = NULL, int $weight = 0) {
+    $url = Civi::paths()->getUrl($url, $preferFormat, $ssl);
+    $this->cssUrls[] = [
+      'url' => $url,
+      'weight' => $weight,
+    ];
+  }
+  /**
+   * Specify a JS url to be included
+   * @param string $url URL to js file. Passed as first parameter to Civi::paths()->getUrl();
+   * @param string $preferFormat 'relative' or 'absolute'. Passed as second parameter to Civi::paths()->getUrl();
+   * @param ssl $ssl NULL to autodetect. TRUE to force to SSL. Passed as third parameter to Civi::paths()->getUrl();
+   * @param int $weight relative order for placement in html <head>
+   */
+  protected function addJsUrl($url, $preferFormat = 'relative', $ssl = NULL, int $weight = 0) {
+    $url = Civi::paths()->getUrl($url, $preferFormat, $ssl);
+    $this->jsUrls[] = [
+      'url' => $url,
+      'weight' => $weight,
+    ];
+  }
+  
+  /**
+   * Assign to template all js/css assets (files and urls)
+   */
+  private function assignAssets() {
+    $tpl = CRM_Core_Smarty::singleton();
+
+    // css files
+    $cssFilesContent = '';
+    $cssFiles = CRM_Utils_Array::asort($this->cssFiles, 'weight');
+    foreach ($cssFiles as $cssFile) {
+      if (
+        !empty($cssFile['path'])
+        && file_exists($cssFile['path'])
+      ) {
+        $cssFilesContent .= "<!-- contents of " . basename($cssFile['path']) . " ... -->\n";
+        $cssFilesContent .= '<style>' . file_get_contents($cssFile['path']). '</style>';
+      }
+    }
+    $tpl->assign('cssFilesContent', $cssFilesContent);
+  
+    // js files
+    $jsFilesContent = '';
+    $jsFiles = CRM_Utils_Array::asort($this->jsFiles, 'weight');
+    foreach ($jsFiles as $jsFile) {
+      if (
+        !empty($jsFile['path'])
+        && file_exists($jsFile['path'])
+      ) {
+        $jsFilesContent .= "<!-- contents of " . basename($jsFile['path']) . " ... -->\n";
+        $jsFilesContent .= '<script>' . file_get_contents($jsFile['path']). '</script>';
+      }
+    }
+    $tpl->assign('jsFilesContent', $jsFilesContent);
+    
+    // css URLs
+    $cssUrlsContent = '';
+    $cssUrls = CRM_Utils_Array::asort($this->cssUrls, 'weight');
+    foreach ($cssUrls as $cssUrl) {
+      if (!empty($cssUrl['url'])) {
+        $cssUrlsContent .= '<link rel="stylesheet" href="' . $cssUrl['url']. '" media="all">';
+      }
+    }
+    $tpl->assign('cssUrlsContent', $cssUrlsContent);
+  
+    // js files
+    $jsUrlsContent = '';
+    $jsUrls = CRM_Utils_Array::asort($this->jsUrls, 'weight');
+    foreach ($jsUrls as $jsUrl) {
+      if (!empty($jsUrl['url'])) {
+        $jsUrlsContent .= '<script src="' . $jsUrl['url'] . '"></script>';
+      }
+    }
+    $tpl->assign('jsUrlsContent', $jsUrlsContent);
   }
   
 }

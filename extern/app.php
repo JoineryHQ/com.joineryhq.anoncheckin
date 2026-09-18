@@ -4,6 +4,13 @@
 (function() {
   set_exception_handler(function (Throwable $e) {
     print "An unexpected error occurred. Error message was: ". $e->getMessage();
+    if ($_REQUEST['debug'] == 1) {
+      print "<pre>";
+      foreach ($e->getTrace() as $traceItem) {
+        print "<br>{$traceItem['file']} (line {$traceItem['line']}), {$traceItem['function']}";
+      }
+      print "</pre>";
+    }
     exit;
   });  
 
@@ -38,7 +45,7 @@
   CRM_Anoncheckin_Setting::singleton($anoncheckinConfig);
 
   // declare app object
-  $app = new CRM_Anoncheckin_Extern_App();
+  $app = CRM_Anoncheckin_Utils_App::getApp();
   // run the app.
   $app->run();  
 })();

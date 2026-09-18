@@ -2,143 +2,14 @@
   <head>
     <title>Session Attendance</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
-    <!-- fixme: this path should be dynamically generated in App::__construct() -->
-    <link rel="stylesheet" id="ls-global-css" href="/wp-content/plugins/civicrm/civicrm/css/crm-i.css" media="all">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css"/>
-    {$cssContent}
-    {$jsContent}
-    <style>
-      body {
-        font-family: sans-serif;
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 1rem;
-        background: #f7f7f7;
-      }
-      .card {
-        background: #fff;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        border-radius: 8px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-      }
-      .center {
-        text-align: center;
-      }
-      .button {
-        display: block;
-        width: 100%;
-        padding: 0.75rem;
-        margin-top: 0.5rem;
-        font-size: 1rem;
-        border: none;
-        border-radius: 6px;
-        background: #007bff;
-        color: #fff;
-        box-sizing: border-box;
-        text-decoration: none;
-      }
-      .button.secondary {
-        background: #6c757d;
-      }
-      .button.success {
-        background: #28a745;
-      }
-      .list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-      }
-      .list li {
-        padding: 0.5rem 0;
-        border-bottom: 1px solid #eee;
-      }
-
-      .card.message {
-        border-left: 4px solid;
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
-      }
-      .card.message.message-type-error {
-        border-color: #cc1e2e;
-      }
-      .card.message.message-type-success {
-        border-color: #1e7e34;
-      }
-      .card.message.message-type-info {
-        border-color: #fdbd00;
-      }
-
-      .inline-message {
-        padding: 1rem;
-      }
-      
-      .card.message.message-type-error,
-      .inline-message.message-type-error {
-        background: #f8d7da;
-        color: #842029;
-      }
-      
-      .card.message.message-type-success,
-      .inline-message.message-type-success {
-        background: #e6f4ea;
-        color: #1e7e34;
-      }
-      
-      .card.message.message-type-info,
-      .inline-message.message-type-info {
-        background: #fff3cd;
-        color: #664d03;
-      }
-
-      #admin-footer {
-        text-align: center;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        padding: .5rem;
-        background: white;
-        font-size: .7rem;
-        color: gray;
-      }
-      #admin-footer a {
-        color: gray;
-      }
-
-      #anoncheckin-participantNameLock {
-        color: green;
-      }
-      a#change-p-link {
-        font-size: .5em;
-        color: green;
-      }
-    </style>
-    <script>
-      {literal}
-      // Attach click handlers to s and p buttons.
-      $(document).ready(function () {
-        $('#anoncheckin-scan-badge').click(
-          {
-            validateCallback: anoncheckinAppCallbacks.urlIsValid,
-            dataSuccessCallback: anoncheckinAppCallbacks.onDataSuccess
-          }, 
-          anoncheckinQrScanner.openScanner
-        );
-        $('#anoncheckin-scan-session').click(
-          {
-            validateCallback: anoncheckinAppCallbacks.urlIsValid,
-            dataSuccessCallback: anoncheckinAppCallbacks.onDataSuccess
-          }, 
-          anoncheckinQrScanner.openScanner
-        );
-      });
-
-      {/literal}
-      
-    </script>
+    <!-- $jsUrlsContent HERE: -->        
+    {$jsUrlsContent}
+    <!-- $cssUrlsContent HERE: -->    
+    {$cssUrlsContent}
+    <!-- $cssFilesContent HERE: -->
+    {$cssFilesContent}
+    <!-- $jsFilesContent HERE: -->
+    {$jsFilesContent}
   </head>
   <body>
     <h1>Session Attendance</h1>
@@ -339,7 +210,7 @@
         | <a target="_blank" href="/civicrm/?page=CiviCRM&q=civicrm%2Fanoncheckin%2Ftestqrcodes">QR Codes</a>
       {/if}
     </div>
-    {include file="{$extensionBasePath}/templates/CRM/Anoncheckin/common/qrScanner.tpl"}
+    {include file="{$extensionBasePath}/templates/CRM/Anoncheckin/Extern/common/qrScanner.tpl"}
   </body>
 </html>
 
