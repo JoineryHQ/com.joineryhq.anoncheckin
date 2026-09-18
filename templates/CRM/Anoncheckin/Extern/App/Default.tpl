@@ -1,9 +1,8 @@
 <!-- Intro -->
 {* Only show this if:
  * - There's no participantId: i.e., if they're now scanning a badge or have already locked to a badge, this is not needed 
- * - OR action is not 'staffInfo': i.e., if this is staffInfo, we only want to show the StaffInfo block.
  *}
-{if !$participantId && !$isStaffInfo}
+{if !$participantId}
 <div class="card center">
   <h2>Welcome</h2>
   <p>Record your sessions here.</p>
