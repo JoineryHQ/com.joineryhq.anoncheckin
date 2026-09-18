@@ -18,6 +18,7 @@ class CRM_Anoncheckin_Extern_App {
   var $jsFiles = [];
   var $cssUrls = [];
   var $jsUrls = [];
+  var $tpl;
   
   /**
    * @var CRM_Core_session Instance of CRM_Core_Session, to be scoped for our own dedicated usage.
@@ -29,6 +30,9 @@ class CRM_Anoncheckin_Extern_App {
     $this->_session = CRM_Core_Session::singleton();
     $this->_session->createScope(self::SESSION_PREFIX);
 
+    // Define smarty variable
+    $this->tpl = CRM_Core_Smarty::singleton();
+    
     // validate all input (value vs hmac sig).
     $this->validateInput();
 
@@ -377,20 +381,19 @@ class CRM_Anoncheckin_Extern_App {
   }
 
   private function print() {
-    $tpl = CRM_Core_Smarty::singleton();
-    $tpl->assign('messages', $this->consumeMessages());
+    $this->assign('messages', $this->consumeMessages());
     if ($this->debug) {
-      $tpl->assign('debugMessages', $this->debugMessages);
+      $this->assign('debugMessages', $this->debugMessages);
     }
     
     $setting = CRM_Anoncheckin_Setting::singleton();
     $extensionBasePath = $setting->get('extensionBasePath');
-    $tpl->assign('extensionBasePath', $extensionBasePath);
+    $this->assign('extensionBasePath', $extensionBasePath);
 
     
     $this->assignAssets();
 
-    $tpl->display($this->getTemplate());
+    $this->tpl->display($this->getTemplate());
     exit();
   }
 
@@ -401,7 +404,7 @@ class CRM_Anoncheckin_Extern_App {
   }
 
   private function assign($name, $value) {
-    CRM_Core_Smarty::singleton()->assign($name, $value);
+    $this->tpl->assign($name, $value);
   }
 
   private function setDebugMessage($message) {
@@ -515,8 +518,6 @@ class CRM_Anoncheckin_Extern_App {
    * Assign to template all js/css assets (files and urls)
    */
   private function assignAssets() {
-    $tpl = CRM_Core_Smarty::singleton();
-
     // css files
     $cssFilesContent = '';
     $cssFiles = CRM_Utils_Array::asort($this->cssFiles, 'weight');
@@ -529,7 +530,7 @@ class CRM_Anoncheckin_Extern_App {
         $cssFilesContent .= '<style>' . file_get_contents($cssFile['path']). '</style>';
       }
     }
-    $tpl->assign('cssFilesContent', $cssFilesContent);
+    $this->assign('cssFilesContent', $cssFilesContent);
   
     // js files
     $jsFilesContent = '';
@@ -543,7 +544,7 @@ class CRM_Anoncheckin_Extern_App {
         $jsFilesContent .= '<script>' . file_get_contents($jsFile['path']). '</script>';
       }
     }
-    $tpl->assign('jsFilesContent', $jsFilesContent);
+    $this->assign('jsFilesContent', $jsFilesContent);
     
     // css URLs
     $cssUrlsContent = '';
@@ -553,7 +554,7 @@ class CRM_Anoncheckin_Extern_App {
         $cssUrlsContent .= '<link rel="stylesheet" href="' . $cssUrl['url']. '" media="all">';
       }
     }
-    $tpl->assign('cssUrlsContent', $cssUrlsContent);
+    $this->assign('cssUrlsContent', $cssUrlsContent);
   
     // js files
     $jsUrlsContent = '';
@@ -563,7 +564,7 @@ class CRM_Anoncheckin_Extern_App {
         $jsUrlsContent .= '<script src="' . $jsUrl['url'] . '"></script>';
       }
     }
-    $tpl->assign('jsUrlsContent', $jsUrlsContent);
+    $this->assign('jsUrlsContent', $jsUrlsContent);
   }
   
 }
