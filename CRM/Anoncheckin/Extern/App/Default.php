@@ -1,23 +1,28 @@
 <?php
 
+use CRM_Anoncheckin_ExtensionUtil as E;
+
 /**
  * Single-page app display and processing.
  */
 class CRM_Anoncheckin_Extern_App_Default extends CRM_Anoncheckin_Extern_App {
 
-  var $participant = [];
   var $participantSessions = [];
 
   function run() {
     $this->addCssFile('css/Extern/App/Default.css');
-    $this->addCssFile('css/Extern/qrScanner.css');
-    $this->addJsFile('js/Extern/qrScanner.js');
+    $this->addCssFile('css/qrScanner.css');
+    $this->addJsFile('js/qrScanner.js');
     $this->addJsFile('js/Extern/App/Default.js');
     $this->addJsUrl('https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js');
 
     // validate all input (value vs hmac sig).
     $this->validateInput();
 
+    if ($this->device['participantId'] ?? FALSE) {
+      $this->participantSessions = CRM_Anoncheckin_Utils_ExternData::cacheSelect('selectParticipantSessions', $this->device['participantId']);
+    }
+    
     // Determine the appropriate action.
     if ($_REQUEST['a']) {
       $actionFunctionName = 'action_' . $_REQUEST['a'];
@@ -163,7 +168,7 @@ class CRM_Anoncheckin_Extern_App_Default extends CRM_Anoncheckin_Extern_App {
     }
 
     // session start/end times are within allowed window? If not, tell them that session's not available: message and redirectClean.
-    if (!CRM_Anoncheckin_Utils_Extern::sessionTimeIsValidNow($session)) {
+    if (!self::sessionTimeIsValidNow($session)) {
       $this->setMessage("The session you have selected (<strong>{$session['title']}</strong>) is not available for attendance recording.", 'error');
       $this->redirectClean();
     }
@@ -290,4 +295,31 @@ class CRM_Anoncheckin_Extern_App_Default extends CRM_Anoncheckin_Extern_App {
     return $ret;
   }
 
+  /**
+   * Is this session available for recording, in light of the current time?
+   *
+   * @param Array $session Session properties, as, e.g. from CRM_Anoncheckin_Utils_ExternData::getSessionInfo()
+   *
+   * @return bool
+   */
+  public static function sessionTimeIsValidNow($session) {
+
+    $setting = CRM_Anoncheckin_Setting::singleton();
+    $limitByTime = ($setting->get('anoncheckin_limit_checkin_by_time') ?? FALSE);
+    if (!$limitByTime) {
+      // Time checking is disabled, so just allow this.
+      return TRUE;            
+    }
+
+    $allowanceMinutes = ($setting->get('anoncheckin_limit_checkin_minutes') ?? 0);
+    $allowanceSeconds = ((int)$allowanceMinutes * 60);
+
+    $windowStart = strtotime($session['startDatetimeUtc'] . ' UTC') - $allowanceSeconds;
+    $windowEnd   = strtotime($session['endDatetimeUtc'] . ' UTC') + $allowanceSeconds;
+    $now = time();
+
+    $timeIsValid = ($now >= $windowStart && $now <= $windowEnd);
+
+    return $timeIsValid;
+  }
 }

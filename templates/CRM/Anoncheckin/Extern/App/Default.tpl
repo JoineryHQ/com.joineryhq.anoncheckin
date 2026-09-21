@@ -93,4 +93,5 @@
 
 {/if}
 
-{include file="{$extensionBasePath}/templates/CRM/Anoncheckin/Extern/common/qrScanner.tpl"}
+{include file="{$extensionBasePath}/templates/CRM/Anoncheckin/common/qrScanner.tpl"}
+

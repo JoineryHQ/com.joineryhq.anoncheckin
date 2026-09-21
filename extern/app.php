@@ -45,7 +45,7 @@
   CRM_Anoncheckin_Setting::singleton($anoncheckinConfig);
 
   // declare app object
-  $app = CRM_Anoncheckin_Utils_App::getApp();
+  $app = CRM_Anoncheckin_Utils_Extern::getApp();
   // run the app.
   $app->run();  
 })();

@@ -11,6 +11,7 @@ class CRM_Anoncheckin_Extern_App {
   var $debugMessages = [];
   var $debug = FALSE;
   var $appUrl = '';
+  var $participant = [];
   
   var $cssFiles = [];
   var $jsFiles = [];
@@ -37,7 +38,7 @@ class CRM_Anoncheckin_Extern_App {
     $this->setting = CRM_Anoncheckin_Setting::singleton();
     $this->debug = $this->setting->get('anoncheckin_debug');
     
-    $deviceKey = CRM_Anoncheckin_Utils_Extern::getUserDeviceKey();
+    $deviceKey = self::getUserDeviceKey();
     if ($deviceKey) {
       // If user's device has been initialized, populate $this->device.
       $this->device = CRM_Anoncheckin_Utils_ExternData::cacheSelect('selectDeviceByKey', $deviceKey);
@@ -48,21 +49,19 @@ class CRM_Anoncheckin_Extern_App {
       // - user-device has a cookie, but a corresponding deviceKey no longer
       // exists in the DB. 
       // Either way, we need to (re-)initialize this device.
-      $this->device = CRM_Anoncheckin_Utils_Extern::initializeDevice();      
+      $this->device = self::initializeDevice();      
     }
     else {
       // We have a device; update the cookie.
-      CRM_Anoncheckin_Utils_Extern::setUserDeviceKey($this->device['deviceKey']);
+      self::setUserDeviceKey($this->device['deviceKey']);
     }
 
     if ($this->device['participantId'] ?? FALSE) {
       $this->participant = CRM_Anoncheckin_Utils_ExternData::cacheSelect('selectParticipantInfo', $this->device['participantId']);
-      $this->participantSessions = CRM_Anoncheckin_Utils_ExternData::cacheSelect('selectParticipantSessions', $this->device['participantId']);
     }
-    
-  }
+}
 
-  public function run() {    
+  public function run() {
     $this->print();
   }
 
@@ -277,6 +276,46 @@ class CRM_Anoncheckin_Extern_App {
       }
     }
     $this->assign('jsUrlsContent', $jsUrlsContent);
+  }
+
+  public static function initializeDevice() {
+    $device = CRM_Anoncheckin_Utils_Device::createDevice();
+    self::setUserDeviceKey($device['deviceKey']);    
+  }
+
+  /**
+   * Get the current device token from cookie.
+   */
+  public static function getUserDeviceKey(): ?string {
+    return $_COOKIE['anoncheckin_device'] ?? NULL;
+  }
+
+  /**
+   * Set the current device token cookie and update _device.expires in DB.
+   */
+  public static function setUserDeviceKey(string $deviceKey): void {
+    // Get device expiry as unix timestamp.
+    $deviceExpiresTimestamp = CRM_Anoncheckin_Utils_Device::calculateExpiresTimestamp();
+    // Set cookie to expire 24 hours after device expiry.
+    // This ensures cookies have a healthy margin of survival so as not to expire before device.
+    $cookieExpiresTimestamp = $deviceExpiresTimestamp + (24 * 60 * 60);
+    setcookie(
+      'anoncheckin_device',
+      $deviceKey,
+      [
+        'expires' => $cookieExpiresTimestamp,
+        'path' => '/',
+        'secure' => TRUE,
+        'httponly' => TRUE,
+        'samesite' => 'Lax',
+      ]
+    );
+
+    // Make available immediately during this request.
+    $_COOKIE['anoncheckin_device'] = $deviceKey;
+
+    // extend device expiry in the database (assuming device not already expired)
+    CRM_Anoncheckin_Utils_ExternData::extendDeviceExpires($deviceKey);
   }
   
 }

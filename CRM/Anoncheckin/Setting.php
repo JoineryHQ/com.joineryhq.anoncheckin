@@ -35,7 +35,9 @@ class CRM_Anoncheckin_Setting {
       }
     }
     else {
-      return \Civi::settings()->get($settingName) ?? $this->config[$settingName] ?? NULL;
+      $settingsValue = \Civi::settings()->get($settingName);
+      $configValue = $this->config[$settingName];
+      return $settingsValue ?? $configValue ?? NULL;
     }
   }
 }

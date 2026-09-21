@@ -54,7 +54,7 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
       $cid = $participant['cid'];
       $displayName = $participant['display_name'];
       $eventTitle = $participant['event_title'];
-      $indivAppUrl = $this->getAppUrl(['p' => $pid, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)]);
+      $indivAppUrl = CRM_Anoncheckin_Utils_Extern::getAppUrl(['p' => $pid, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)]);
       $indivUrls[] = [
         'title' => "$displayName at \"{$eventTitle}\" ($pid)",
         'app' => $indivAppUrl,
@@ -86,7 +86,7 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
       $cid = $participant['cid'];
       $displayName = $participant['display_name'];
       $eventTitle = $participant['event_title'];
-      $indivAppUrl = $this->getAppUrl(['p' => $pid, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)]);
+      $indivAppUrl = CRM_Anoncheckin_Utils_Extern::getAppUrl(['p' => $pid, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)]);
       $indivUrls[] = [
         'title' => "$displayName at \"{$eventTitle}\" ($pid)",
         'app' => $indivAppUrl,
@@ -98,7 +98,7 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
     $pid = -1;
     $displayName = 'Non-existent participant';
     $eventTitle = 'N/A';
-    $indivAppUrl = $this->getAppUrl(['p' => $pid, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)]);
+    $indivAppUrl = CRM_Anoncheckin_Utils_Extern::getAppUrl(['p' => $pid, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)]);
     $indivUrls[] = [
       'title' => "$displayName at \"{$eventTitle}\" ($pid)",
       'app' => $indivAppUrl,
@@ -109,7 +109,7 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
 
     $sessionUrls = [];
     foreach ($sessions as $sessionId => $sessionTitle) {
-      $appUrl = $this->getAppUrl(['s' => $sessionId, 'sh' => CRM_Anoncheckin_Utils_Value::generateSignature($sessionId)]);
+      $appUrl = CRM_Anoncheckin_Utils_Extern::getAppUrl(['s' => $sessionId, 'sh' => CRM_Anoncheckin_Utils_Value::generateSignature($sessionId)]);
       $sessionUrls[] = [
         'title' => $sessionTitle,
         'app' => $appUrl,
@@ -118,21 +118,6 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
     }
     $this->assign('sessionUrls', $sessionUrls);
     parent::run();
-  }
-
-  private function getAppUrl($params = []) {
-    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $host   = $_SERVER['HTTP_HOST'];
-    $base = CRM_Anoncheckin_Utils_Extern::getAppUrl();
-    if (!empty($params)) {
-      $url = $base . '?' . http_build_query($params);
-    }
-    else {
-      $url = $base;
-    }
-
-    return $url;
-
   }
 
 }
