@@ -6,7 +6,7 @@ use CRM_Anoncheckin_ExtensionUtil as E;
 class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
 
   public function run() {
-    $eventId = 113;
+    $eventId = 118;
 
     $sessions = [];
     $query = "
