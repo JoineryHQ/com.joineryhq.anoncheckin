@@ -367,24 +367,6 @@ class CRM_Anoncheckin_Form_AnoncheckinStaff extends CRM_Core_Form {
     CRM_Core_Session::singleton()->setStatus(E::ts('Sessions saved.'), 'Success.', 'success no-popup');
     
   }
-  
-  protected function _invalidateDevicesForParticipant(int $participantId, string $logNote = ''): int {
-    $deviceUpdate = \Civi\Api4\AnoncheckinDevice::update()
-      ->addWhere('device_status_id', '=', CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_LOCKED)
-      ->addWhere('participant_id', '=', $participantId)
-      ->setValues([
-        'device_status_id' => CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_INVALIDATED
-      ])
-      ->execute();
-    $updateCount = count((array) $deviceUpdate);
-    if ($updateCount && $logNote) {
-      foreach ($deviceUpdate as $device) {
-        // Log invalidation for all affected devices.
-        CRM_Anoncheckin_Utils_Device::createDeviceLogEntry(CRM_Anoncheckin_Utils_Extern::DEVICE_LOG_TYPE_ADMIN, 'Invalidated by staff action. Log note: '. $logNote, $device['id']);
-      }
-    }
-    return $updateCount;
-  }  
 
   protected function _closeDevice($deviceKey) {
     \Civi\Api4\AnoncheckinDevice::update()

@@ -29,6 +29,9 @@ class CRM_Anoncheckin_Utils_Extern {
     if ($_REQUEST['a'] == 'staff_info') {
       return new CRM_Anoncheckin_Extern_App_StaffInfo();
     }
+    if ($_REQUEST['a'] == 'self_unlock') {
+      return new CRM_Anoncheckin_Extern_App_SelfUnlock();
+    }
     return new CRM_Anoncheckin_Extern_App_Default();
   }
   

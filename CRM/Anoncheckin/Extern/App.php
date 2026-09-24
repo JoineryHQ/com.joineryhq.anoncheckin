@@ -127,8 +127,8 @@ class CRM_Anoncheckin_Extern_App {
     $this->debugMessages[] = $message;
   }
 
-  protected function redirectClean() {
-    header('Location: '. $this->appUrl);
+  protected function redirectClean(array $params = []) {
+    header('Location: '. CRM_Anoncheckin_Utils_Extern::getAppUrl($params));
     exit();
   }
   
@@ -320,5 +320,23 @@ class CRM_Anoncheckin_Extern_App {
     // extend device expiry in the database (assuming device not already expired)
     CRM_Anoncheckin_Utils_ExternData::extendDeviceExpires($deviceKey);
   }
-  
+
+  protected function isSelfUnlockSupported() {
+    if (!CRM_Anoncheckin_Utils_Settings::get('anoncheckin_self_unlock_enabled')) {
+      // false if we're not configured for this.
+      return FALSE;
+    }
+    if (CRM_Extension_System::singleton()->getManager()->getStatus('org.civicoop.emailapi') != 'installed') {
+      // false if email_api extension is not available.
+      return FALSE;      
+    }
+    if (
+      // false if we don't have a valid template for this.
+      !($templateId = CRM_Anoncheckin_Utils_Settings::get('anoncheckin_self_unlock_template'))
+      || !array_key_exists($templateId, CRM_Anoncheckin_Utils_Settings::getMessageTemplateOptions()) 
+    ) {
+      return FALSE;
+    }
+    return TRUE;
+  }  
 }

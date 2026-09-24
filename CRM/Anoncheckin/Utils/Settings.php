@@ -50,5 +50,10 @@ class CRM_Anoncheckin_Utils_Settings {
     $options = ['' => ts('- select -')] + CRM_Core_BAO_MessageTemplate::getMessageTemplates(FALSE);
     return $options;
   }
+
+  public static function getTimezoneOptions() {
+    $identifiers = DateTimeZone::listIdentifiers(DateTimeZone::ALL);
+    return ['' => ts('- select -')] + array_combine($identifiers, $identifiers);
+  }
   
 }

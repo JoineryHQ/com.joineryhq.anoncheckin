@@ -56,10 +56,11 @@ class CRM_Anoncheckin_Utils_Config {
     ];
 
     // Add all of our own settings values.
-    $extensionSettings = require E::path('settings/Anoncheckin.setting.php');
-    $extensionSettingsKeys = array_keys($extensionSettings);
-    foreach ($extensionSettingsKeys as $extensionSettingsKey) {
-      $config[$extensionSettingsKey] = Civi::settings()->get($extensionSettingsKey);
+    $allSettings = Civi::settings()->all();
+    foreach ($allSettings as $allSettingsName => $allSettingsValue) {
+      if (str_starts_with($allSettingsName, E::SHORT_NAME . '_')) {
+        $config[$allSettingsName] = $allSettingsValue;
+      }
     }
 
     $json = json_encode($config);

@@ -43,7 +43,7 @@ class CRM_Anoncheckin_Utils_ExternData {
    */
   public static function selectParticipantInfo(int $pid): ?array {
     $sql = "
-      SELECT c.display_name, p.event_id, e.title as event_title, p.id as participant_id
+      SELECT c.display_name, p.event_id, e.title as event_title, p.id as participant_id, c.id as contact_id
       FROM civicrm_participant p
         INNER JOIN civicrm_contact c
           ON c.id = p.contact_id
@@ -61,7 +61,33 @@ class CRM_Anoncheckin_Utils_ExternData {
     $ret = self::rowToArray($dao->toArray());
 
     return $ret;
+  }
 
+  /**
+   * Get primary email for a given participant ID
+   * 
+   * @param int $pid Participant ID
+   * @return string If participant exists, default email address, otherwise NULL
+   */
+  public static function selectParticipantEmail(int $pid): string {
+    $sql = "
+      SELECT e.email
+      FROM civicrm_participant p
+        INNER JOIN civicrm_email e
+          ON e.contact_id = p.contact_id AND e.is_primary
+      WHERE p.id = %1
+    ";
+    $params = [1 => [$pid, 'Integer']];
+
+    $dao = CRM_Core_DAO::executeQuery($sql, $params);
+
+    if (!$dao->fetch()) {
+      return NULL;
+    }
+
+    $ret = $dao->email;
+
+    return $ret;
   }
 
   public static function selectSessionInfo(int $session_id): ?array {

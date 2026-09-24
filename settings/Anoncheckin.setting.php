@@ -136,6 +136,20 @@ return [
     'is_contact' => 0,
     'settings_pages' => ['anoncheckin' => ['weight' => 90]],
   ],
+  'anoncheckin_timezone' => [
+    'name' => 'anoncheckin_timezone',
+    'type' => 'String',
+    'title' => E::ts('Timezone'),
+    'description' => E::ts('Timezone for user-facing time indicators'),
+    'default' => CRM_Core_Config::singleton()->userSystem->getTimeZoneString(),
+    'html_type' => 'select',
+    'pseudoconstant' => [
+      'callback' => 'CRM_Anoncheckin_Utils_Settings::getTimezoneOptions',
+    ],
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'settings_pages' => ['anoncheckin' => ['weight' => 100]],
+  ],
   'anoncheckin_debug' => [
     'name' => 'anoncheckin_debug',
     'type' => 'Boolean',
@@ -145,6 +159,6 @@ return [
     'html_type' => 'Toggle',
     'is_domain' => 1,
     'is_contact' => 0,
-    'settings_pages' => ['anoncheckin' => ['weight' => 100]],
+    'settings_pages' => ['anoncheckin' => ['weight' => 200]],
   ],
 ];

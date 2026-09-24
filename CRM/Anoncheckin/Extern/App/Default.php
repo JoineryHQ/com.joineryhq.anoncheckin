@@ -24,17 +24,13 @@ class CRM_Anoncheckin_Extern_App_Default extends CRM_Anoncheckin_Extern_App {
     }
     
     // Determine the appropriate action.
-    if ($_REQUEST['a']) {
-      $actionFunctionName = 'action_' . $_REQUEST['a'];
-    } else {
-      $actionFunctionName = "action_default";
-      foreach (['s', 'p'] as $actionKey) {
-        if ($_REQUEST[$actionKey] ?? '') {
-          $actionValue = $_REQUEST[$actionKey];
-          $method = strtolower($_SERVER['REQUEST_METHOD']);
-          $actionFunctionName = "action_{$method}_{$actionKey}";
-          break;
-        }
+    $actionFunctionName = "action_default";
+    foreach (['s', 'p'] as $actionKey) {
+      if ($_REQUEST[$actionKey] ?? '') {
+        $actionValue = $_REQUEST[$actionKey];
+        $method = strtolower($_SERVER['REQUEST_METHOD']);
+        $actionFunctionName = "action_{$method}_{$actionKey}";
+        break;
       }
     }
 
@@ -106,7 +102,7 @@ class CRM_Anoncheckin_Extern_App_Default extends CRM_Anoncheckin_Extern_App {
         ];
         if ($this->isSelfUnlockSupported()) {
           array_unshift($recoveryOptions, E::ts('<a href="%1">Click here to unlock your badge via email</a>; OR', [
-            '1' => CRM_Anoncheckin_Utils_Extern::getAppUrl(['a' => 'self_unlock']),
+            '1' => CRM_Anoncheckin_Utils_Extern::getAppUrl(['a' => 'self_unlock', 'p' => $p, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($p)]),
           ]));
         }
         $recoveryOptionsList = '<ul>';
@@ -322,21 +318,6 @@ class CRM_Anoncheckin_Extern_App_Default extends CRM_Anoncheckin_Extern_App {
     $timeIsValid = ($now >= $windowStart && $now <= $windowEnd);
 
     return $timeIsValid;
-  }
-
-  private function isSelfUnlockSupported() {
-    // FIXME: return false if email_api extension is not available.
-
-    if (!CRM_Anoncheckin_Utils_Settings::get('anoncheckin_self_unlock_enabled')) {
-      return FALSE;
-    }
-    if (
-      !($templateId = CRM_Anoncheckin_Utils_Settings::get('anoncheckin_self_unlock_template'))
-      || !array_key_exists($templateId, CRM_Anoncheckin_Utils_Settings::getMessageTemplateOptions()) 
-    ) {
-      return FALSE;
-    }
-    return TRUE;
   }
 
 }
