@@ -21,6 +21,12 @@ function anoncheckin_civicrm_buildForm($formName, &$form) {
       // Add a message with link to test qr codes.
       $qrTestingUrl = CRM_Utils_System::url('civicrm/anoncheckin/testqrcodes', NULL, NULL, NULL, NULL, TRUE, NULL);
       CRM_Core_Session::setStatus(E::ts('You may also view <a href="%1">QR codes for testing</a>', ['1' => $qrTestingUrl]), NULL, 'no-popup');
+
+      // Inform javascript whether 'emailapi' is installed.
+      $jsVars = [
+        'isEmailApiInstalled' => (CRM_Extension_System::singleton()->getManager()->getStatus('org.civicoop.emailapi') == 'installed'),
+      ];
+      CRM_Core_Resources::singleton()->addVars(E::SHORT_NAME, $jsVars);
     }
   }
   elseif ($formName == 'CRM_Badge_Form_Layout') {
