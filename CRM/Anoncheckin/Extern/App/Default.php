@@ -73,23 +73,6 @@ class CRM_Anoncheckin_Extern_App_Default extends CRM_Anoncheckin_Extern_App {
     $this->setDebugMessage('No action given, using default action.');
   }
 
-  private function action_change_p() {
-    $this->setDebugMessage('Action: ' . __FUNCTION__);
-    $this->setDebugMessage('State: Requested to change p.');
-
-    // is this device locked?
-    $lockedPid = $this->getDeviceLockedPid();
-    if ($lockedPid) {
-      // device is locked to some other pid.
-      $this->fatalLocked();
-    }
-
-    // If we're still here, it's a little strange, because the action was "change my participant id / i.e. unlock my device"),
-    // which should only happen if the device is locked.
-    // So, just redirect to clean app.
-    $this->redirectClean();
-  }
-
   /**
    * Action: User has scanned a badge; prompt user for lock-in.
    */
@@ -272,7 +255,7 @@ class CRM_Anoncheckin_Extern_App_Default extends CRM_Anoncheckin_Extern_App {
 
   private function fatalLocked() {
     $participantName = $this->participant['displayName'];
-    $this->fatal("Your device is locked to the badge for <strong>$participantName</strong>. If that's incorrect, please see a staff member for help.");
+    $this->fatal(E::ts("Your device is locked to the badge for <strong>%1</strong>. If that's incorrect, please see a staff member for help.", [1 => $participantName]));
   }
 
   /**

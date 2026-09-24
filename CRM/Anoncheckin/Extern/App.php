@@ -81,6 +81,9 @@ class CRM_Anoncheckin_Extern_App {
     $this->addCssUrl('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css');
     $this->addJsUrl('https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js');
 
+    $this->addCssFile('vendor/sweetalert2/sweetalert2.min.css');
+    $this->addJsFile('vendor/sweetalert2/sweetalert2.min.js');
+
     // Pass all input vars to template.
     foreach ($_REQUEST as $requestKey => $requestValue) {
       $this->assign($requestKey, $requestValue);
