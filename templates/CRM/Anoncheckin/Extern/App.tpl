@@ -15,7 +15,7 @@
     <h1>Session Attendance</h1>
     {if !empty($messages)}
       {foreach from=$messages item=message}
-        <div class="card center message message-type-{$message.type}">
+        <div class="card message message-type-{$message.type}">
           <span>{$message.message}</span>
         </div>
       {/foreach}

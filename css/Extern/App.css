@@ -6,6 +6,9 @@ body {
   padding: 1rem;
   background: #f7f7f7;
 }
+a {
+  color: green;  
+}
 .card {
   background: #fff;
   padding: 1rem;

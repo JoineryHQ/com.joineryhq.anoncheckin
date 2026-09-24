@@ -46,5 +46,9 @@ class CRM_Anoncheckin_Utils_Settings {
     \Civi::settings()->set('anoncheckin_qr_badge_layouts', implode(',', array_unique($value)));
   }
   
+  public static function getMessageTemplateOptions() {
+    $options = ['' => ts('- select -')] + CRM_Core_BAO_MessageTemplate::getMessageTemplates(FALSE);
+    return $options;
+  }
   
 }

@@ -118,7 +118,25 @@ class CRM_Anoncheckin_Extern_App_Default extends CRM_Anoncheckin_Extern_App {
       // Is this badge locked to someone other device?
       $deviceLockedToPid = CRM_Anoncheckin_Utils_ExternData::cacheSelect('selectLockedDeviceByPid', $p);
       if (!empty($deviceLockedToPid)) {
-        $this->fatal("The badge for <strong>{$badgeParticipant['displayName']}</strong> has been locked by another device ({$deviceLockedToPid['userAgentShort']}).<br/>To record sessions for {$badgeParticipant['displayName']} on <em>this</em> device, please see a staff member for assistance.");
+        $recoveryOptions = [
+          E::ts('Please see a staff member for assistance.'),
+        ];
+        if ($this->isSelfUnlockSupported()) {
+          array_unshift($recoveryOptions, E::ts('<a href="%1">Click here to unlock your badge via email</a>; OR', [
+            '1' => CRM_Anoncheckin_Utils_Extern::getAppUrl(['a' => 'self_unlock']),
+          ]));
+        }
+        $recoveryOptionsList = '<ul>';
+        foreach ($recoveryOptions as $recoveryOption) {
+          $recoveryOptionsList .= "<li>{$recoveryOption}</li>";
+        }
+        $recoveryOptionsList .= '</ul>';
+        $fatalMessage = E::ts("The badge for <strong>%1</strong> has been locked by another device (%2). <br/>To record sessions for %1 on <em>this</em> device: %3", [
+          '1' => $badgeParticipant['displayName'],
+          '2' => $deviceLockedToPid['userAgentShort'],
+          '3' => $recoveryOptionsList,
+        ]);
+        $this->fatal($fatalMessage);
       }
       // If we're still here, user has an unlocked device, and their badge is also not locked elsewhere.
       $this->assign('participantEventTitle', $badgeParticipant['eventTitle']);
@@ -322,4 +340,20 @@ class CRM_Anoncheckin_Extern_App_Default extends CRM_Anoncheckin_Extern_App {
 
     return $timeIsValid;
   }
+
+  private function isSelfUnlockSupported() {
+    // FIXME: return false if email_api extension is not available.
+
+    if (!CRM_Anoncheckin_Utils_Settings::get('anoncheckin_self_unlock_enabled')) {
+      return FALSE;
+    }
+    if (
+      !($templateId = CRM_Anoncheckin_Utils_Settings::get('anoncheckin_self_unlock_template'))
+      || !array_key_exists($templateId, CRM_Anoncheckin_Utils_Settings::getMessageTemplateOptions()) 
+    ) {
+      return FALSE;
+    }
+    return TRUE;
+  }
+
 }
