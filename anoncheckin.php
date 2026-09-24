@@ -18,6 +18,9 @@ function anoncheckin_civicrm_buildForm($formName, &$form) {
     if ($form->getSettingPageFilter() == 'anoncheckin') {
       // Add our javascript for this form.
       CRM_Core_Resources::singleton()->addScriptFile(E::LONG_NAME, 'js/CRM_Admin_Form_Generic-anoncheckin.js');
+      // Add a message with link to test qr codes.
+      $qrTestingUrl = CRM_Utils_System::url('civicrm/anoncheckin/testqrcodes', NULL, NULL, NULL, NULL, TRUE, NULL);
+      CRM_Core_Session::setStatus(E::ts('You may also view <a href="%1">QR codes for testing</a>', ['1' => $qrTestingUrl]), NULL, 'no-popup');
     }
   }
   elseif ($formName == 'CRM_Badge_Form_Layout') {
