@@ -14,6 +14,8 @@ class CRM_Anoncheckin_Extern_App_SelfUnlock extends CRM_Anoncheckin_Extern_App {
       $this->fatal("We're sorry, the \"Unlock via email\" feature is not currently enabled.");
     }
     
+    $this->addJsFile('js/Extern/App/SelfUnlock.js');
+
     // Determine the appropriate action.
     if ($_REQUEST['p'] ?? '') {
       $mode = 'request';

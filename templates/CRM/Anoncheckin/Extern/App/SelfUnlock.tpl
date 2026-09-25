@@ -15,7 +15,9 @@
       <input type="hidden" name="a" value="self_unlock">
       <input type="hidden" name="p" value="{$p}">
       <input type="hidden" name="ph" value="{$ph}">
-      <input type="submit" class="button {$buttonClass}" value="{$buttonLabel}">
+      <!-- pre-load fontawesome spinner font for snappier display -->
+      <i style="display: none" class="fa fa-spinner fa-spin"></i>
+      <button type="submit" id="anoncheckin-send-email" class="button {$buttonClass}">{$buttonLabel}</button>
     </form>
   {elseif $action == "action_get_apply"}
     <p>You're about to unlock the badge for <strong>{$displayName}</strong>.</p>
