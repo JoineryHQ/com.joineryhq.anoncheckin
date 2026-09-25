@@ -298,7 +298,7 @@ class CRM_Anoncheckin_Utils_ExternData {
 
   /**
    * Get all properties of a device for a given deviceKey (ignoring any devices
-   * with status='closed' or expires <= now)
+   * with status='closed' or status='invalidated' or expires <= now)
    *
    * @param string $deviceKey
    * @return array|null If device found, an array of device properties; otherwise null.
@@ -309,13 +309,14 @@ class CRM_Anoncheckin_Utils_ExternData {
       SELECT d.id as device_id, d.*
       FROM civicrm_anoncheckin_device d
       WHERE d.device_key = %1
-        AND d.device_status_id != %2
+        AND d.device_status_id not in (%2, %3)
         AND d.expires > unix_timestamp()
     ";
 
     $params = [
       1 => [$deviceKey, 'String'],
       2 => [CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_CLOSED, 'Integer'],
+      3 => [CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_INVALIDATED, 'Integer'],
     ];
 
     $dao = CRM_Core_DAO::executeQuery($sql, $params);
