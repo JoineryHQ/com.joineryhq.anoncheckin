@@ -34,13 +34,6 @@ class CRM_Anoncheckin_Extern_App_Default extends CRM_Anoncheckin_Extern_App {
       }
     }
 
-    if (
-      $this->device['deviceStatusId'] == CRM_Anoncheckin_Utils_Device::DEVICE_STATUS_INVALIDATED && $actionFunctionName != 'action_staff_info'
-    ) {
-      // If device is invalid (and we're not just viewing staff info), fatal with message.
-      $this->fatal('There is a problem verifying your identity. Please see a staff member for assistance.');
-    }
-
     $this->assign('participantName', ($this->participant['displayName'] ?? NULL));
     $this->assign('participantId', ($this->participant['participantId'] ?? NULL));
     $deviceIsLocked = (bool) $this->getDeviceLockedPid();
@@ -101,9 +94,7 @@ class CRM_Anoncheckin_Extern_App_Default extends CRM_Anoncheckin_Extern_App {
           E::ts('Please see a staff member for assistance.'),
         ];
         if ($this->isSelfUnlockSupported()) {
-          array_unshift($recoveryOptions, E::ts('<a href="%1">Click here to unlock your badge via email</a>; OR', [
-            '1' => CRM_Anoncheckin_Utils_Extern::getAppUrl(['a' => 'self_unlock', 'p' => $p, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($p)]),
-          ]));
+          array_unshift($recoveryOptions, E:: ts('Click below to unlock your badge via email</a>; OR'));
         }
         $recoveryOptionsList = '<ul>';
         foreach ($recoveryOptions as $recoveryOption) {
@@ -115,7 +106,13 @@ class CRM_Anoncheckin_Extern_App_Default extends CRM_Anoncheckin_Extern_App {
           '2' => $deviceLockedToPid['userAgentShort'],
           '3' => $recoveryOptionsList,
         ]);
-        $this->fatal($fatalMessage);
+        $extraButtons = [new CRM_Anoncheckin_Extern_Button(
+          E::ts("Yes, let's fix it by via email"), 
+          CRM_Anoncheckin_Utils_Extern::getAppUrl(['a' => 'self_unlock', 'p' => $p, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($p)]),
+          '',
+          -1,
+        )];
+        $this->fatal($fatalMessage, $extraButtons);
       }
       // If we're still here, user has an unlocked device, and their badge is also not locked elsewhere.
       $this->assign('participantEventTitle', $badgeParticipant['eventTitle']);

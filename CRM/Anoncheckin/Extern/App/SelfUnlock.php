@@ -1,5 +1,7 @@
 <?php
 
+use CRM_Anoncheckin_ExtensionUtil as E;
+
 /**
  * Single-page app display and processing.
  */
@@ -105,7 +107,10 @@ class CRM_Anoncheckin_Extern_App_SelfUnlock extends CRM_Anoncheckin_Extern_App {
     $pid = $_REQUEST['dp'];
     $logNote = 'Participant self-unlock via email';
     $updateCount = CRM_Anoncheckin_Utils_Device::invalidateDevicesForParticipant($pid, $logNote);
-    
+    $badgeParticipant = CRM_Anoncheckin_Utils_ExternData::cacheSelect('selectParticipantInfo', $pid);
+    $this->setMessage(E::ts("The badge for <strong>%1</strong> has been unlocked from all devices. Please lock this device to your badge now.", [
+      '1' => $badgeParticipant['displayName']
+    ]), 'success');
     $this->redirectClean(['p' => $pid, 'ph' => CRM_Anoncheckin_Utils_Value::generateSignature($pid)]);
   }
   
