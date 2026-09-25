@@ -8,6 +8,10 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
   public function run() {
     $eventId = 118;
 
+    $badgeQrColor = '0B3D91';
+    $sessionQrColor = '1B5E20';
+
+    // Get sessions for this event.
     $sessions = [];
     $query = "
       select s.id, s.title
@@ -26,25 +30,27 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
       $sessions[$dao->id] = $dao->title;
     }
 
-    $badgeQrColor = '0B3D91';
-    $sessionQrColor = '1B5E20';
-
+    // Get a set of participant IDs for this event.
+    $userCid = crm_core_session::getLoggedInContactID();
     $indivUrls = [];
     $query = "
       select p.id as pid,
         e.title as event_title,
         p.contact_id as cid,
-        c.display_name
+        c.display_name,
+        (c.id = %2) as is_current_user
       from civicrm_participant p
         inner join civicrm_contact c on c.id = p.contact_id
         inner join civicrm_event e on e.id = p.event_id
       where p.event_id = %1
         and c.contact_type = 'individual'
-        and c.id > 500
+        and (c.id = %2 or c.id > 500)
+      order by is_current_user desc
       limit 2
     ";
     $queryParams = [
       1 => [$eventId, 'Int'],
+      2 => [$userCid, 'Int'],
     ];
     $dao = CRM_Core_DAO::executeQuery($query, $queryParams);
     $dao = CRM_Core_DAO::executeQuery($query, $queryParams);
@@ -62,6 +68,7 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
       ];
     }
 
+    // Get one participant for some other event.
     $query = "
       select p.id as pid,
         e.title as event_title,
