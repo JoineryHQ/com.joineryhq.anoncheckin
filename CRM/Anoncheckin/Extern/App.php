@@ -1,5 +1,7 @@
 <?php
 
+use CRM_Anoncheckin_ExtensionUtil as E;
+
 /**
  * Single-page app display and processing.
  */
@@ -65,13 +67,29 @@ class CRM_Anoncheckin_Extern_App {
     $this->print();
   }
 
-  protected function fatal($message) {
+  /**
+   * Display a fatal error with 'go back' button and optional extra buttons.
+   * @param string $message The fatal error message.
+   * @param array $extraButtons An array of CRM_Anoncheckin_Extern_Button objects. (Buttons will be sorted by weight; default 'Go Back' button has weight=0)
+   */
+  protected function fatal(string $message, array $extraButtons = []) {
     $this->isFatal = TRUE;
     $this->setMessage($message, 'error');
     if (!empty($this->device['deviceId'])) {
       // In odd circumstances, there may be no device, so only log if we have one.
       CRM_Anoncheckin_Utils_ExternData::insertDeviceLog($this->device['deviceId'], CRM_Anoncheckin_Utils_Extern::DEVICE_LOG_TYPE_USER, $message);
     }
+    // Default button:
+    $defaultButton = new CRM_Anoncheckin_Extern_Button(E::ts('Go Back'), $this->appUrl, 'secondary', 0);
+    $buttons = [$defaultButton->toArray()];
+    foreach ($extraButtons as $extraButton) {
+      if (! is_a($extraButton, 'CRM_Anoncheckin_Extern_Button')) {
+        throw new Exception('extraButtons members must be CRM_Anoncheckin_Extern_Button objects; ' . get_debug_type($extraButton) . ' given.');
+      }
+      $buttons[] = $extraButton->toArray();
+    }
+    $buttons = CRM_Utils_Array::crmArraySortByField($buttons, 'weight');
+    $this->assign('buttons', $buttons);
     $this->print();
   }
 
