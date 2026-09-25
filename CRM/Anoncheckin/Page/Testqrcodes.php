@@ -31,7 +31,7 @@ class CRM_Anoncheckin_Page_Testqrcodes extends CRM_Core_Page {
     }
 
     // Get a set of participant IDs for this event.
-    $userCid = crm_core_session::getLoggedInContactID();
+    $userCid = (crm_core_session::getLoggedInContactID() ?? 0);
     $indivUrls = [];
     $query = "
       select p.id as pid,
