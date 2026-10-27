@@ -232,6 +232,8 @@ function anoncheckin_civicrm_alterBadge($labelName, CRM_Badge_BAO_Badge &$label,
       'qrOffsetX' => $qrOffsetX,
       'qrOffsetY' => $qrOffsetY,
       'qrSideLength' => $qrSideLength,
+      'labelXSpace' => $labelXSpace,
+      'labelYSpace' => $labelYSpace,
     ];
   }
 
@@ -259,10 +261,10 @@ function anoncheckin_civicrm_alterBadge($labelName, CRM_Badge_BAO_Badge &$label,
 
   // Calculation of total column gutter space preceding the current badge.
   // (This is, BTW "0" in the first row, as it should be.)
-  $labelXSpaces = ($labelCountX * $labelXSpace);
+  $labelXSpaces = ($labelCountX * $staticValues['labelXSpace']);
   // Calculation of total column gutter space preceding the current badge.
   // (This is, BTW "0" in the first column, as it should be.)
-  $labelYSpaces = ($labelCountY ? ($labelCountY * $labelYSpace) : 0);
+  $labelYSpaces = ($labelCountY ? ($labelCountY * $staticValues['labelYSpace']) : 0);
 
   // Calculation of the X placement of our QR code image.
   // This is:
