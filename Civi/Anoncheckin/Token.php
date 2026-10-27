@@ -22,13 +22,18 @@ class Token extends AutoSubscriber {
 
   public function eval(TokenValueEvent $e): void {
     $activeTokens = $e->getTokenProcessor()->getMessageTokens();    
+    $contactTokens = ($activeTokens['contact'] ?? []);
+    if (empty($contactTokens)) {
+      // If there are no 'contact' tokens, we have nothing to do.
+      return;
+    }
     foreach ($e->getRows() as $row) {
       $row->format('text/html');
-      if (in_array('anoncheckin_self_unlock_link', $activeTokens['contact'])) {
+      if (in_array('anoncheckin_self_unlock_link', $contactTokens)) {
         $pid = \Civi::$statics['anoncheckin_self_unlock_link_pid'];
         $row->tokens('contact', 'anoncheckin_self_unlock_link', \CRM_Anoncheckin_Extern_App_SelfUnlock::generateApplyLink($pid));
       }
-      if (in_array('anoncheckin_self_unlock_expire_time', $activeTokens['contact'])) {
+      if (in_array('anoncheckin_self_unlock_expire_time', $contactTokens)) {
         $ttlMinutes = \CRM_Anoncheckin_Utils_Settings::get('anoncheckin_self_unlock_link_ttl');
         $tokenValue = "{$ttlMinutes} minutes";
         $ufTimeZone = \CRM_Anoncheckin_Utils_Settings::get('anoncheckin_timezone');
